@@ -56,6 +56,7 @@ class Aircraft:
         SpanHalf = 0
         Sweep = 0
         Airfoil = 0
+        Ainc = 0
         Mass = 0
 
     class VStab:
@@ -150,10 +151,10 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
         AVLFile.write(Acft.Wing.Airfoil+"\n")
         if i < slices/2:
             AVLFile.write("CONTROL\n")
-            AVLFile.write("flap     1.0  0.7  0. 0. 0.  +1\n")
+            AVLFile.write("flap     1.0  0.70  0. 0. 0.  +1\n")
         if i > 3*slices/4:
             AVLFile.write("CONTROL\n")
-            AVLFile.write("aileron  1.0  0.8  0. 0. 0.  -1\n")
+            AVLFile.write("aileron  1.0  0.80  0. 0. 0.  -1\n")
         AVLFile.write("\n")
 
 
@@ -228,35 +229,68 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
     AVLFile.write("\n")
     AVLFile.write("TRANSLATE\n")
-    AVLFile.write(Acft.Wing.AttachPos[0]+"  "+Acft.Wing.AttachPos[1]+"  "+Acft.Wing.AttachPos[2]+"\n\n\n")
+    AVLFile.write(Acft.HStab.AttachPos[0]+"  "+Acft.HStab.AttachPos[1]+"  "+Acft.HStab.AttachPos[2]+"\n\n\n")
 
-    intervalWing:float = Acft.Wing.SpanHalf/slices
-    for i in range(0,slices-1):
-        Chord:float = (Acft.Wing.RootChord*(slices-i)+Acft.Wing.TipChord*i)/slices
-        LEx:float = intervalWing*i*math.tan(Acft.Wing.Sweep/180*math.pi)
-        LEy:float = intervalWing*i
+    intervalHStab:float = Acft.HStab.SpanHalf/StabSlices
+    for i in range(0,StabSlices-1):
+        Chord:float = (Acft.HStab.RootChord*(StabSlices-i)+Acft.HStab.TipChord*i)/StabSlices
+        LEx:float = intervalHStab*i*math.tan(Acft.HStab.Sweep/180*math.pi)
+        LEy:float = intervalHStab*i
         AVLFile.write("SECTION\n")
         AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
-        AVLFile.write(LEx+"    "+LEy+"    "+"0.0"+"     "+Chord+"    "+Acft.Wing.Ainc+"\n")
+        AVLFile.write(LEx+"    "+LEy+"    "+"0.0"+"     "+Chord+"    "+Acft.HStab.Ainc+"\n")
         AVLFile.write("NACA\n")
-        AVLFile.write(Acft.Wing.Airfoil+"\n")
-        if i < slices/2:
-            AVLFile.write("CONTROL\n")
-            AVLFile.write("flap     1.0  0.7  0. 0. 0.  +1\n")
-        if i > 3*slices/4:
-            AVLFile.write("CONTROL\n")
-            AVLFile.write("aileron  1.0  0.8  0. 0. 0.  -1\n")
+        AVLFile.write(Acft.HStab.Airfoil+"\n")
+        AVLFile.write("CONTROL\n")
+        AVLFile.write("elevator 1.0  0.70  0. 0. 0.  +1\n")
         AVLFile.write("\n")
 
+    #Write Vstab
+    if Acft.VStab.Num == 1:
+        AVLFile.write("SURFACE\nVertical Stabilizer\n")
+        AVLFile.write("!Nchordwise  Cspace  Nspanwise  Sspace\n") 
+        AVLFile.write(StabSlices+"           "+"1.0"+"     "+2*StabSlices+"         1.0\n")
+        AVLFile.write("\n")
+        AVLFile.write("COMPONENT \n1\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+        AVLFile.write("\n")
+        AVLFile.write("TRANSLATE\n")
+        AVLFile.write(Acft.VStab.AttachPos[0]+"  "+Acft.VStab.AttachPos[1]+"  "+Acft.VStab.AttachPos[2]+"\n\n\n")
+
+        intervalVStab:float = Acft.VStab.Span/StabSlices
+        for i in range(0,StabSlices-1):
+            Chord:float = (Acft.VStab.RootChord*(StabSlices-i)+Acft.VStab.TipChord*i)/StabSlices
+            LEx:float = intervalVStab*i*math.tan(Acft.VStab.Sweep/180*math.pi)
+            LEz:float = intervalVStab*i
+            AVLFile.write("SECTION\n")
+            AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
+            AVLFile.write(LEx+"    "+"0.0"+"    "+LEz+"     "+Chord+"    0.\n")
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("rudder 1.0  0.70  0. 0. 0.  +1\n")
+            AVLFile.write("\n")
+
+    elif Acft.VStab.Num ==2:
+        AVLFile.write("SURFACE\nVertical Stabilizer\n")
+        AVLFile.write("!Nchordwise  Cspace  Nspanwise  Sspace\n") 
+        AVLFile.write(StabSlices+"           "+"1.0"+"     "+2*StabSlices+"         1.0\n")
+        AVLFile.write("\n")
+        AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+        AVLFile.write("\n")
+        AVLFile.write("TRANSLATE\n")
+        AVLFile.write(Acft.VStab.AttachPos[0]+"  "+Acft.VStab.AttachPos[1]+"  "+Acft.VStab.AttachPos[2]+"\n\n\n")
+
+        intervalVStab:float = Acft.VStab.Span/StabSlices
+        for i in range(0,StabSlices-1):
+            Chord:float = (Acft.VStab.RootChord*(StabSlices-i)+Acft.VStab.TipChord*i)/StabSlices
+            LEx:float = intervalVStab*i*math.tan(Acft.VStab.Sweep/180*math.pi)
+            LEz:float = intervalVStab*i
+            AVLFile.write("SECTION\n")
+            AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
+            AVLFile.write(LEx+"    "+"0.0"+"    "+LEz+"     "+Chord+"    0.\n")
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("rudder 1.0  0.70  0. 0. 0.  +1\n")
+            AVLFile.write("\n")
+
+    #Write MotorPod
+    #tbd
 
     AVLFile.close()
-
-# SECTION
-# #Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
-# -0.5    6.0    0.0     21.0    5.0  
-# NACA
-# 2412
-# CONTROL
-# slat    -1.0 -0.05  0. 0. 0.  +1
-# CONTROL
-# flap     1.0  0.81  0. 0. 0.  +1
