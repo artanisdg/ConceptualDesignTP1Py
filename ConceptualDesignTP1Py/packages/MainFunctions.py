@@ -10,6 +10,17 @@ if 'darwin' in sys.platform:
 import packages.AVLFunctions as AVLF
 import packages.AVLAircraft as Acft
 
-def sizing(): 0
+def initSizing():
+    0 #tbd
 
-def runAVL(): 0
+def sizing():
+    0 #tbd
+
+def runAVL():
+    0 #tbd
+
+def analyzeAero():
+    0 #tbd
+
+def analyzePerf():
+    0 #tbd

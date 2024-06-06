@@ -79,7 +79,11 @@ class Aircraft:
         Length = 0
         Mass = 0
         
-    def readFromTxt(self):
+    def readFromTxt(self,path:string):
+        AcftTxt = open(path,"r")
+        linesTemp = AcftTxt.readlines()
+
+
         0 #tbd
         
     def CalcCoM(self):
