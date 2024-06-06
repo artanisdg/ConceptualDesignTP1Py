@@ -3,12 +3,21 @@ import subprocess
 
 def RunAVL():0
 
-avl = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
+AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
 
 
-print("PLOP",file=avl.stdin)
-print("G",file=avl.stdin)
-print(file=avl.stdin)
-print("Quit",file=avl.stdin)
+def createAVLFile(name): 0
+
+def createMassFile(name): 0
+
+class runtime:
+    def createRunFile(name): 0
+
+    def modifyRunFile(name,var,value): 0
+
+# print("PLOP",file=avl.stdin)
+# print("G",file=avl.stdin)
+# print(file=avl.stdin)
+# print("Quit",file=avl.stdin)
 
 
