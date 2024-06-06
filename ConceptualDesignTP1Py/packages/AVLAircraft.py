@@ -10,12 +10,14 @@ import packages.AVLFunctions as AVLF
 
 
 class AircraftData:
-    ModelType = 0
+    def __init__(self,modType):
+        self.ModelType = modType
     
     class Wing:
         RootChord = 0
         TipChord = 0
         SpanHalf = 0
+        Sweep = 0
         Airfoil = 2412
         AttachPos = [0,0,0]
         CoM = [0,0]
@@ -34,6 +36,7 @@ class AircraftData:
         RootChord = 0
         TipChord = 0
         SpanHalf = 0
+        Sweep = 0
         Airfoil = 0
         AttachPos = [0,0,0]
         CoM = [0,0]
@@ -44,6 +47,7 @@ class AircraftData:
         RootChord = 0
         TipChord = 0
         Span = 0
+        Sweep = 0
         AttachPos = [0,0,0]
         CoM = [0,0]
         Mass = 0
