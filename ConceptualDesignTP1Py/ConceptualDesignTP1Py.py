@@ -8,7 +8,6 @@ if 'darwin' in sys.platform:
 import math
 import string
 import packages.MainFunctions as MainF
-import packages.AVLFunctions as AVLF
 
 
 

@@ -8,6 +8,7 @@ if 'darwin' in sys.platform:
     sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import packages.AVLFunctions as AVLF
+import packages.AVLAircraft as Acft
 
 def sizing(): 0
 
