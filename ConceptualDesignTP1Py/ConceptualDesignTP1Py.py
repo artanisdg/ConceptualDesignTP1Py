@@ -7,6 +7,8 @@ if 'darwin' in sys.platform:
 
 import math
 import string
+import packages.AVLFunctions as AVLF
+import packages.AVLAircraft as Acft
 import packages.MainFunctions as MainF
 
 

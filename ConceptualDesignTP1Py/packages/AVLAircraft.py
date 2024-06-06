@@ -35,6 +35,7 @@ class Aircraft:
         Airfoil = 2412
         Ainc = 0
         Mass = 0
+        #--------End of SubClass : Wing--------
 
     class Fuselage:
         def __init__(self):
@@ -46,6 +47,7 @@ class Aircraft:
         SlopeLower = 0
         SlopeSide = 0
         Mass = 0
+        #--------End of SubClass : Fuselage--------
 
     class HStab:
         def __init__(self):
@@ -58,6 +60,7 @@ class Aircraft:
         Airfoil = 0
         Ainc = 0
         Mass = 0
+        #--------End of SubClass : HStab--------
 
     class VStab:
         def __init__(self):
@@ -69,6 +72,7 @@ class Aircraft:
         Span = 0
         Sweep = 0
         Mass = 0
+        #--------End of SubClass : VStab--------
 
     class MotorPod:
         def __init__(self):
@@ -78,13 +82,227 @@ class Aircraft:
         Radius = 0
         Length = 0
         Mass = 0
+        #--------End of SubClass : MotorPod--------
         
-    def readFromTxt(self,path:string):
+    def ReadFromTxt(self,path:string):
         AcftTxt = open(path,"r")
         linesTemp = AcftTxt.readlines()
+        Section:string = None
+        Key:int = 0
+        Tgt:int = 0
+        for line in linesTemp:
+            line = line.strip()
+            if line == "Generic":
+                Section = "Generic"
+                G:int = 0
+                Tgt = Tgt+1
+            elif line == "Wing":
+                Section = "Wing"
+                W:int = 0
+                Tgt = Tgt+1
+            elif line == "Fuselage":
+                Section = "Fuselage"
+                F:int = 0
+                Tgt = Tgt+1
+            elif line == "HStab":
+                Section = "HStab"
+                HS:int = 0
+                Tgt = Tgt+1
+            elif line == "VStab":
+                Section = "VStab"
+                VS:int = 0
+                Tgt = Tgt+1
 
+            elif line.isspace():
+                0
+            
+            else:
+                line.split('=')
+                for val in line:
+                    val = val.strip()
+                
+                if Section == "Generic":
+                    if line[0] == "Name":
+                        self.Name = line[1]
+                        G=G+1
+                    elif line[0] == "ModelType":
+                        self.ModelType = line[1]
+                        G=G+1
+                    else:
+                        print("Unrecognized Variable for Aircraft Generic")
+                        G=0
+                    
+                elif Section == "Wing":
+                    if line[0] == "AttachPos":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.Wing.AttachPos[i]=PosVec
+                        W=W+1
+                    elif line[0] == "CoM":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.Wing.CoM[i]=PosVec
+                        W=W+1
+                    elif line[0] == "RootChord":
+                        self.Wing.RootChord = line[1]
+                        W=W+1
+                    elif line[0] == "TipChord":
+                        self.Wing.TipChord = line[1]
+                        W=W+1
+                    elif line[0] == "SpanHalf":
+                        self.Wing.SpanHalf = line[1]
+                        W=W+1
+                    elif line[0] == "Sweep":
+                        self.Wing.Sweep = line[1]
+                        W=W+1
+                    elif line[0] == "Airfoil":
+                        self.Wing.Airfoil = line[1]
+                        W=W+1
+                    elif line[0] == "Ainc":
+                        self.Wing.Ainc = line[1]
+                        W=W+1
+                    elif line[0] == "Mass":
+                        self.Wing.Mass = line[1]
+                        W=W+1
+                    else:
+                        print("Unrecognized Variable for Aircraft Wing")
+                        W=0
 
-        0 #tbd
+                elif Section == "Fuselage":
+                    if line[0] == "CoM":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.Fuselage.CoM[i]=PosVec
+                        F=F+1
+                    elif line[0] == "Length":
+                        self.Fuselage.Length = line[1]
+                        F=F+1
+                    elif line[0] == "Height":
+                        self.Fuselage.Height = line[1]
+                        F=F+1
+                    elif line[0] == "Width":
+                        self.Fuselage.Width = line[1]
+                        F=F+1
+                    elif line[0] == "SlopeUpper":
+                        self.Fuselage.SlopeUpper = line[1]
+                        F=F+1
+                    elif line[0] == "SlopeLower":
+                        self.Fuselage.SlopeLower = line[1]
+                        F=F+1
+                    elif line[0] == "SlopeSide":
+                        self.Fuselage.SlopeSide = line[1]
+                        F=F+1
+                    elif line[0] == "Mass":
+                        self.Fuselage.Mass = line[1]
+                        F=F+1
+                    else:
+                        print("Unrecognized Variable for Aircraft Fuselage")
+                        F=0
+
+                elif Section == "HStab":
+                    if line[0] == "AttachPos":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.HStab.AttachPos[i]=PosVec
+                        HS=HS+1
+                    elif line[0] == "CoM":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.HStab.CoM[i]=PosVec
+                        HS=HS+1
+                    elif line[0] == "RootChord":
+                        self.HStab.RootChord = line[1]
+                        HS=HS+1
+                    elif line[0] == "TipChord":
+                        self.HStab.TipChord = line[1]
+                        HS=HS+1
+                    elif line[0] == "SpanHalf":
+                        self.HStab.SpanHalf = line[1]
+                        HS=HS+1
+                    elif line[0] == "Sweep":
+                        self.HStab.Sweep = line[1]
+                        HS=HS+1
+                    elif line[0] == "Airfoil":
+                        self.HStab.Airfoil = line[1]
+                        HS=HS+1
+                    elif line[0] == "Ainc":
+                        self.HStab.Ainc = line[1]
+                        HS=HS+1
+                    elif line[0] == "Mass":
+                        self.HStab.Mass = line[1]
+                        HS=HS+1
+                    else:
+                        print("Unrecognized Variable for Aircraft Horizontal Stabilizer")
+                        HS=0
+                    
+                elif Section == "VStab":
+                    if line[0] == "AttachPos":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.VStab.AttachPos[i]=PosVec
+                        VS=VS+1
+                    elif line[0] == "CoM":
+                        PosVec = line[1].split(',')
+                        for Val in PosVec:
+                            Val.strip()
+                        for i in [0,1,2]:
+                            self.VStab.CoM[i]=PosVec
+                        VS=VS+1
+                    elif line[0] == "Num":
+                        self.VStab.Num = line[1]
+                        VS=VS+1
+                    elif line[0] == "RootChord":
+                        self.VStab.RootChord = line[1]
+                        VS=VS+1
+                    elif line[0] == "TipChord":
+                        self.VStab.TipChord = line[1]
+                        VS=VS+1
+                    elif line[0] == "Span":
+                        self.VStab.Span = line[1]
+                        VS=VS+1
+                    elif line[0] == "Sweep":
+                        self.VStab.Sweep = line[1]
+                        VS=VS+1
+                    elif line[0] == "Mass":
+                        self.VStab.Mass = line[1]
+                        VS=VS+1
+                    else:
+                        print("Unrecognized Variable for Aircraft Vertical Stabilizer")
+                        VS=0
+                
+                else:
+                    print("Unrecognized Section Name / TXT Format Not to Standard")
+            if G == 2:
+                print("Generic : Complete")
+                Key = Key+1
+            if W == 9:
+                print("Wing    : Complete")
+                Key = Key+1
+            if F == 8:
+                print("Fuselage: Complete")
+                Key = Key+1
+            if HS == 9:
+                print("HStab   : Complete")
+                Key = Key+1
+            if VS == 8:
+                print("VStab   : Complete")
+                Key = Key+1
+        if Key == Tgt:
+            print("All Components Completely Loaded")
+        #End of ReadFromTxt
+
         
     def CalcCoM(self):
         GW = 2*self.Wing.Mass+2*self.Fuselage.Mass+2*self.HStab.Mass+self.VStab.Num*self.VStab.Mass+self.MotorPod.Num*self.MotorPod.Mass
@@ -108,7 +326,9 @@ class Aircraft:
         
         self.CoM = [x,y,z]
         self.Mass = GW
+        #End of CalcCoM
 
+    #--------------End of Class : Aircraft----------------------
         
 
 def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
@@ -298,3 +518,12 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     #tbd
 
     AVLFile.close()
+
+    MassFile = open(MassPath,"w")
+
+    #Write to MassFile
+    #tbd
+
+    MassFile.close()
+
+    #End of WriteACtoFile
