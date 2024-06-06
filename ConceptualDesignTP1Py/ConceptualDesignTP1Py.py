@@ -1,16 +1,21 @@
-import subprocess
-import math
-import MainFunctions
-import AVLFunctions
+import sys
+import os
+if 'darwin' in sys.platform:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-avl = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
+import math
+import packages.MainFunctions
+
+if 'Mac' in sys.platform:
+    import packages.AVLFunctionsMac as AVLFunctionsMac
+elif 'Windows' in sys.platform:
+    import packages.AVLFunctions as AVLFunctions
+
+
 
 Specs = open("Specs1.csv","a")
 Specs.write("C, R, S, V")
 Specs.close()
 
 
-print("PLOP",file=avl.stdin)
-print("G",file=avl.stdin)
-print(file=avl.stdin)
-print("Quit",file=avl.stdin)
