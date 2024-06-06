@@ -9,7 +9,7 @@ import packages.MainFunctions
 
 if 'Mac' in sys.platform:
     import packages.AVLFunctionsMac as AVLFunctionsMac
-elif 'Windows' in sys.platform:
+else:
     import packages.AVLFunctions as AVLFunctions
 
 
