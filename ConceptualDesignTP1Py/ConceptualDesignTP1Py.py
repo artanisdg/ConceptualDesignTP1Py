@@ -7,11 +7,7 @@ if 'darwin' in sys.platform:
 
 import math
 import packages.MainFunctions as MainF
-
-if 'darwin' in sys.platform:
-    import packages.AVLFunctionsMac as AVLF
-else:
-    import packages.AVLFunctions as AVLF
+import packages.AVLFunctions as AVLF
 
 
 

@@ -3,7 +3,7 @@ import subprocess
 
 def RunAVL():0
 
-AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
+
 
 def createAVLFile(name): 0
 

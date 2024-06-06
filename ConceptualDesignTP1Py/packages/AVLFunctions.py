@@ -1,10 +1,14 @@
+import os
+import sys
 import math
 import subprocess
 
 def RunAVL():0
 
-AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
-
+if 'darwin' in sys.platform:
+    AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
+else:
+    AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
 
 def createAVLFile(name): 0
 
