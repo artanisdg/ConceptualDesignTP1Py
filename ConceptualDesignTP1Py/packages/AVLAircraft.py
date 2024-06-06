@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import string
 
 if 'darwin' in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +33,7 @@ class Aircraft:
         SpanHalf = 0
         Sweep = 0
         Airfoil = 2412
+        Ainc = 0
         Mass = 0
 
     class Fuselage:
@@ -109,21 +111,117 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     
     AVLFile = open(AVLpath,"a")
     
-    AVLFile.write(Acft.Name)
-    AVLFile.write("")
-    AVLFile.write("#Mach")
-    AVLFile.write(" 0.42")
-    AVLFile.write("")
-    AVLFile.write("#IYsym   IZsym   Zsym")
-    AVLFile.write(" 0       0       0.0")
-    AVLFile.write("")
-    AVLFile.write("#Sref    Cref    Bref")
-    AVLFile.write("1260.0   11.0    113.0")
-    AVLFile.write("")
-    AVLFile.write("#Xref    Yref    Zref")
-    AVLFile.write(Acft.CoM[0],"     ",Acft.CoM[1],"     ",Acft.CoM[2])
-    
+    AVLFile.write(Acft.Name+"\n")
+    AVLFile.write("\n")
+    AVLFile.write("#Mach\n")
+    AVLFile.write(" 0.42\n")
+    AVLFile.write("\n")
+    AVLFile.write("#IYsym   IZsym   Zsym\n")
+    AVLFile.write(" 0       0       0.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("#Sref    Cref    Bref\n")
+    AVLFile.write("1260.0   11.0    113.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("#Xref    Yref    Zref\n")
+    AVLFile.write(Acft.CoM[0]+"     "+Acft.CoM[1]+"     "+Acft.CoM[2]+"\n")
+    AVLFile.write("#--------------------------------------------------\n")
 
-    for i in range(1,slices):
-        0 #tbd
+
+    #Write Wing
+    AVLFile.write("SURFACE\nWing\n")
+    AVLFile.write("!Nchordwise  Cspace  Nspanwise  Sspace") 
+    AVLFile.write(slices+"           "+"1.0"+"     "+2*slices+"         1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("TRANSLATE\n")
+    AVLFile.write(Acft.Wing.AttachPos[0]+"  "+Acft.Wing.AttachPos[1]+"  "+Acft.Wing.AttachPos[2]+"\n\n\n")
+
+    interval:float = Acft.Wing.SpanHalf/slices
+    for i in range(1,slices-1):
+        Chord:float = (Acft.Wing.RootChord*(slices-i)+Acft.Wing.TipChord*i)/slices
+        LEx:float = interval*i*math.tan(Acft.Wing.Sweep/180*math.pi)
+        LEy:float = interval*i
+        AVLFile.write("SECTION")
+        AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace")
+        AVLFile.write(LEx+"    "+LEy+"    "+"0.0"+"     "+Chord+"    "+Acft.Wing.Ainc+"\n")
+        AVLFile.write("NACA\n")
+        AVLFile.write(Acft.Wing.Airfoil+"\n")
+        if i < slices/2:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("flap     1.0  0.7  0. 0. 0.  +1\n")
+        if i > 3*slices/4:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("aileron  1.0  0.8  0. 0. 0.  -1\n")
+        AVLFile.write("\n")
+
+
+    #Write FuselageH
+    AVLFile.write("SURFACE\nFuselageH\n")
+    AVLFile.write("!Nchordwise  Cspace  Nspanwise  Sspace") 
+    AVLFile.write(30+"           "+"1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("TRANSLATE\n")
+    AVLFile.write("0.0  0.0  0.0\n\n\n")
+
+    interval:float = Acft.Wing.SpanHalf/slices
+    for i in range(1,slices-1):
+        Chord:float = (Acft.Wing.RootChord*(slices-i)+Acft.Wing.TipChord*i)/slices
+        LEx:float = interval*i*math.tan(Acft.Wing.Sweep/180*math.pi)
+        LEy:float = interval*i
+        AVLFile.write("SECTION")
+        AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace")
+        AVLFile.write(LEx+"    "+LEy+"    "+"0.0"+"     "+Chord+"    "+Acft.Wing.Ainc+"\n")
+        AVLFile.write("NACA\n")
+        AVLFile.write(Acft.Wing.Airfoil+"\n")
+        if i < slices/2:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("flap     1.0  0.7  0. 0. 0.  +1\n")
+        if i > 3*slices/4:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("aileron  1.0  0.8  0. 0. 0.  -1\n")
+        AVLFile.write("\n")
+
+
+    #Write FuselageV
+    AVLFile.write("SURFACE\nFuselageH\n")
+    AVLFile.write("!Nchordwise  Cspace  Nspanwise  Sspace") 
+    AVLFile.write(30+"           "+"1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+    AVLFile.write("\n")
+    AVLFile.write("TRANSLATE\n")
+    AVLFile.write(Acft.Wing.AttachPos[0]+"  "+Acft.Wing.AttachPos[1]+"  "+Acft.Wing.AttachPos[2]+"\n\n\n")
+
+    interval:float = Acft.Wing.SpanHalf/slices
+    for i in range(1,slices-1):
+        Chord:float = (Acft.Wing.RootChord*(slices-i)+Acft.Wing.TipChord*i)/slices
+        LEx:float = interval*i*math.tan(Acft.Wing.Sweep/180*math.pi)
+        LEy:float = interval*i
+        AVLFile.write("SECTION")
+        AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace")
+        AVLFile.write(LEx+"    "+LEy+"    "+"0.0"+"     "+Chord+"    "+Acft.Wing.Ainc+"\n")
+        AVLFile.write("NACA\n")
+        AVLFile.write(Acft.Wing.Airfoil+"\n")
+        if i < slices/2:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("flap     1.0  0.7  0. 0. 0.  +1\n")
+        if i > 3*slices/4:
+            AVLFile.write("CONTROL\n")
+            AVLFile.write("aileron  1.0  0.8  0. 0. 0.  -1\n")
+        AVLFile.write("\n")
+
+
   
+
+# SECTION
+# #Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+# -0.5    6.0    0.0     21.0    5.0  
+# NACA
+# 2412
+# CONTROL
+# slat    -1.0 -0.05  0. 0. 0.  +1
+# CONTROL
+# flap     1.0  0.81  0. 0. 0.  +1

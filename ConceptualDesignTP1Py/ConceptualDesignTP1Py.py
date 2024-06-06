@@ -6,6 +6,7 @@ if 'darwin' in sys.platform:
     sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import math
+import string
 import packages.MainFunctions as MainF
 import packages.AVLFunctions as AVLF
 
