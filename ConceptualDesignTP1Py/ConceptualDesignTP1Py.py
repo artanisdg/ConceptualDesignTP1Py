@@ -17,9 +17,7 @@ import packages.MainFunctions as MainF
 # Specs.write("C, R, S, V")
 # Specs.close()
 
-s = [1,1,1]
-v = [2,2,2]
-L = s+v
+RTTest = AVLF.runtime("Test.avl","Test.mass","Test.run")
+TestAC = Acft.Aircraft(1,"Test")
 
-print(L)
-
+MainF.initSizing(RTTest,TestAC,"Test.txt",10)
