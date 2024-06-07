@@ -12,13 +12,14 @@ import packages.AVLAircraft as Acft
 
 def initSizing(avl:AVLF.runtime,ACFT:Acft.Aircraft,pth:string,res:int):
     ACFT.ReadFromTxt(pth)
-    Acft.WriteACtoFile(ACFT,avl,res)
     setBattery(ACFT,200,5000,0.66)
+    ACFT.CalcCoM()
+    Acft.WriteACtoFile(ACFT,avl,res)
 
-def setBattery(ACFT:Acft.Aircraft,DensityWhkg,WhReq,WingtoBody:float):
+def setBattery(ACFT:Acft.Aircraft,DensityWhkg,WhReq,WingBatteryRatio:float):
     BattGW = WhReq/DensityWhkg
-    BattWing = BattGW*WingtoBody
-    BattBody = BattGW*(1-WingtoBody)
+    BattWing = BattGW*WingBatteryRatio
+    BattBody = BattGW*(1-WingBatteryRatio)
     ACFT.Battery.Mass.L = BattWing/2
     ACFT.Battery.Mass.R = BattWing/2
     ACFT.Battery.Mass.F = BattBody
@@ -53,9 +54,22 @@ def resizeAC(ACFT:Acft.Aircraft,option:int):
         ACFT.HStab.AttachPos[0] = ACFT.HStab.AttachPos[0] + 0.3
     else:
         print("resizeAC Function Call Error")
+    ACFT.CalcCoM()
+    
 
-def runAVL():
-    0 #tbd
+def runAVL(RTime:AVLF.runtime,resPath:str):
+    avlF = RTime.readAVLFileName()
+    masF = RTime.readMassFileName()
+    runF = RTime.readRunFileName()
+
+    RTime.AVLcommand(("LOAD "+avlF))
+    RTime.AVLcommand(("MASS "+masF))
+    RTime.AVLcommand("OPER")
+    RTime.AVLcommand("X")
+    RTime.AVLcommand("W")
+    RTime.AVLcommand(resPath)
+    RTime.AVLreturn()
+    RTime.AVLcommand("Quit")
 
 def analyzeAero():
     0 #tbd

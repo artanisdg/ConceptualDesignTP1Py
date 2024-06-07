@@ -401,9 +401,9 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     AVLFile.write("TRANSLATE\n")
     AVLFile.write(str(round(Acft.Wing.AttachPos[0],2))+"  "+str(round(Acft.Wing.AttachPos[1],2))+"  "+str(round(Acft.Wing.AttachPos[2],2))+"\n\n\n")
 
-    intervalWing:float = Acft.Wing.SpanHalf/slices*2
-    for i in range(0,round((slices/2)-1)):
-        Chord:float = (Acft.Wing.RootChord*(slices/2-i-1)+Acft.Wing.TipChord*i)/(slices/2-1)
+    intervalWing:float = Acft.Wing.SpanHalf/slices
+    for i in range(0,slices-1):
+        Chord:float = (Acft.Wing.RootChord*(slices-i)+Acft.Wing.TipChord*i)/slices
         LEx:float = intervalWing*i*math.tan(Acft.Wing.Sweep/180*math.pi)
         LEy:float = intervalWing*i
         AVLFile.write("SECTION\n")
@@ -411,10 +411,10 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
         AVLFile.write(str(round(LEx,2))+"    "+str(round(LEy,2))+"    "+"0.0"+"     "+str(round(Chord,2))+"    "+str(round(Acft.Wing.Ainc,2))+"\n")
         AVLFile.write("NACA\n")
         AVLFile.write(str(round(Acft.Wing.Airfoil,2))+"\n")
-        if i < slices/4:
+        if i < slices/2:
             AVLFile.write("CONTROL\n")
             AVLFile.write("flap     1.0  0.70  0. 0. 0.  +1\n")
-        if i > 3*slices/8:
+        if i > 3*slices/4:
             AVLFile.write("CONTROL\n")
             AVLFile.write("aileron  1.0  0.80  0. 0. 0.  -1\n")
         AVLFile.write("\n")
@@ -493,9 +493,9 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     AVLFile.write("TRANSLATE\n")
     AVLFile.write(str(round(Acft.HStab.AttachPos[0],2))+"  "+str(round(Acft.HStab.AttachPos[1],2))+"  "+str(round(Acft.HStab.AttachPos[2],2))+"\n\n\n")
 
-    intervalHStab:float = Acft.HStab.SpanHalf/StabSlices*2
-    for i in range(0,round((StabSlices/2)-1)):
-        Chord:float = (Acft.HStab.RootChord*(StabSlices/2-i-1)+Acft.HStab.TipChord*i)/(StabSlices/2-1)
+    intervalHStab:float = Acft.HStab.SpanHalf/StabSlices
+    for i in range(0,StabSlices-1):
+        Chord:float = (Acft.HStab.RootChord*(StabSlices-i)+Acft.HStab.TipChord*i)/StabSlices
         LEx:float = intervalHStab*i*math.tan(Acft.HStab.Sweep/180*math.pi)
         LEy:float = intervalHStab*i
         AVLFile.write("SECTION\n")
@@ -518,9 +518,9 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
         AVLFile.write("TRANSLATE\n")
         AVLFile.write(str(round(Acft.VStab.AttachPos[0],2))+"  "+str(round(Acft.VStab.AttachPos[1],2))+"  "+str(round(Acft.VStab.AttachPos[2],2))+"\n\n\n")
 
-        intervalVStab:float = Acft.VStab.Span/StabSlices*2
-        for i in range(0,round((StabSlices-1)/2)):
-            Chord:float = (Acft.VStab.RootChord*(StabSlices/2-i-1)+Acft.VStab.TipChord*i)/(StabSlices/2-1)
+        intervalVStab:float = Acft.VStab.Span/StabSlices
+        for i in range(0,StabSlices-1):
+            Chord:float = (Acft.VStab.RootChord*(StabSlices-i)+Acft.VStab.TipChord*i)/StabSlices
             LEx:float = intervalVStab*i*math.tan(Acft.VStab.Sweep/180*math.pi)
             LEz:float = intervalVStab*i
             AVLFile.write("SECTION\n")
@@ -540,8 +540,8 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
         AVLFile.write("TRANSLATE\n")
         AVLFile.write(str(round(Acft.VStab.AttachPos[0],2))+"  "+str(round(Acft.VStab.AttachPos[1],2))+"  "+str(round(Acft.VStab.AttachPos[2],2))+"\n\n\n")
 
-        intervalVStab:float = Acft.VStab.Span/StabSlices*2
-        for i in range(0,round((StabSlices-1)/2)):
+        intervalVStab:float = Acft.VStab.Span/StabSlices
+        for i in range(0,StabSlices-1):
             Chord:float = (Acft.VStab.RootChord*(StabSlices-i)+Acft.VStab.TipChord*i)/StabSlices
             LEx:float = intervalVStab*i*math.tan(Acft.VStab.Sweep/180*math.pi)
             LEz:float = intervalVStab*i

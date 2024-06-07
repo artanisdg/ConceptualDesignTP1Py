@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys, signal
 import math
 import string
 import subprocess
@@ -8,11 +7,6 @@ import subprocess
 if 'darwin' in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.dirname(SCRIPT_DIR))
-
-if 'darwin' in sys.platform:
-    AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
-else:
-    AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
 
 def createAVLFile(name):
     0 #Do I really need this?
@@ -26,7 +20,14 @@ class runtime:
         self.AVLFileName = AVLnm
         self.MassFileName = Massnm
         self.createRunFile()
+        self.AVLSession = self.StartAVL()
     
+    def StartAVL(self):
+        if 'darwin' in sys.platform:
+            return subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
+        else:
+            return subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
+
     def createRunFile(self):
         RunFile = open(self.RunFileName,"w")
         #tbd
@@ -59,7 +60,13 @@ class runtime:
     
     def setMassFileName(self,input):
         self.MassFileName=input
+        
+    def AVLcommand(self,cmd:str):
+        print(cmd,file=self.AVLSession.stdin)
     
+    def AVLreturn(self):
+        print(file=self.AVLSession.stdin)
+        
     #--------------End of Class : runtime----------------------
 
 

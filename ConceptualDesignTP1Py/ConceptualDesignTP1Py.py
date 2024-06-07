@@ -7,6 +7,7 @@ if 'darwin' in sys.platform:
 
 import math
 import string
+import time
 import packages.AVLFunctions as AVLF
 import packages.AVLAircraft as Acft
 import packages.MainFunctions as MainF
@@ -21,3 +22,5 @@ RTTest = AVLF.runtime("Test.avl","Test.mass","Test.run")
 TestAC = Acft.Aircraft(1,"Test")
 
 MainF.initSizing(RTTest,TestAC,"Test.txt",10)
+
+MainF.runAVL(RTTest,"Results.txt")
