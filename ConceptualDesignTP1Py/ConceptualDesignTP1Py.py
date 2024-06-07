@@ -1,3 +1,4 @@
+from ast import main
 import os
 import sys
 
@@ -23,4 +24,13 @@ TestAC = Acft.Aircraft(1,"Test")
 
 MainF.initSizing(RTTest,TestAC,"Test.txt",20)
 
-MainF.runAVL(RTTest,"T1/Results.txt")
+#MainF.runAVL(RTTest,"T1/Results.txt")
+
+#RTTest.reStartAVL()
+
+MainF.TOAnalysis(TestAC,RTTest,"TO1")
+# MainF.CLBAnalysis()
+# MainF.CRZAnalysis()
+# MainF.DESAnalysis()
+# MainF.LDGAnalysis()
+# MainF.TaxiAnalysis()

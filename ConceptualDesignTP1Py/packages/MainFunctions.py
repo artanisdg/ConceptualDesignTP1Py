@@ -3,6 +3,8 @@ import sys
 import math
 import string
 
+gAcc = 9.80665 #m/s^2
+
 if 'darwin' in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -57,17 +59,29 @@ def resizeAC(ACFT:Acft.Aircraft,option:int):
     ACFT.CalcCoM()
     
 
-def runAVL(RTime:AVLF.runtime,resPath:str):
+def setupAVL(RTime:AVLF.runtime):
     avlF = RTime.readAVLFileName()
     masF = RTime.readMassFileName()
     runF = RTime.readRunFileName()
 
     RTime.AVLcommand(("LOAD "+avlF))
     RTime.AVLcommand(("MASS "+masF))
+    RTime.AVLcommand(("MSET 0"))
+
+def operAVL(RTime:AVLF.runtime,Mach,Alpha,Flap,Elevator,resPath:str):
     RTime.AVLcommand("OPER")
+    #if Mach != 0:
+    #    RTime.AVLcommand("M M "+str(Mach))
+    if Alpha != 0:
+        RTime.AVLcommand("A A "+str(Alpha))
+    if Flap != 0:
+        RTime.AVLcommand("D1 D1 "+str(Flap))
+    if Elevator != 0:
+        RTime.AVLcommand("D3 D3 "+str(Elevator))
     RTime.AVLcommand("X")
     RTime.AVLcommand("W")
     RTime.AVLcommand(resPath)
+    RTime.AVLreturn()
     RTime.AVLreturn()
     RTime.AVLcommand("Quit")
 
@@ -77,8 +91,86 @@ def analyzeAero():
 def analyzePerf():
     0 #tbd
     
-class SessionData:
+class LimitationData:
     ReqEnergy:float #in Wh
     MaxThrust:float #in N
+    MaxPower:float #in W
     ThrustEfficiency:float #in floating point (Eprop * Emotor)
-    WingDensity:float #in kg/m^2 for wing area
+
+class SessionData:
+    Mach = 0.42
+    VmpsT = 245/1.94384 #245KTAS
+    Alt = 30000/3.28084 #inMeters
+    rhoSet = [1.225,0.90464,0.65269,0.45831]
+    
+    rhoAlt = Alt*3.28084/10000
+    rho = float(rhoSet[0])
+    
+    def __init__(self,Mach,Vktas,Altft):
+        self.Mach = Mach; self.VmpsT = Vktas/1.94384; self.Alt = Altft/3.28084
+        self.rhoAlt = self.Alt*3.28084/10000
+        if self.rhoAlt < 1:
+            self.rho = self.rhoAlt*self.rhoSet[1]+(1-self.rhoAlt)*self.rhoSet[0]
+        elif self.rhoAlt < 2:
+            self.rho = (self.rhoAlt-1)*self.rhoSet[2]+(2-self.rhoAlt)*self.rhoSet[1]
+        elif self.rhoAlt < 3:
+            self.rho = (self.rhoAlt-2)*self.rhoSet[3]+(3-self.rhoAlt)*self.rhoSet[2]
+    
+
+def TOAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
+    TOSession = SessionData(0.212,10,0)
+    
+    Friction = ACFT.Mass*0.01*gAcc
+    
+    
+    for a in range(8,15):
+        for i in range(1,20):
+            path:str = resFolder+"/Result_a"+str(a)+"_m"+str(round(TOSession.Mach*i/20,2))+".txt"
+            AVLrt.reStartAVL()
+            setupAVL(AVLrt)
+            operAVL(AVLrt,TOSession.Mach*i/20,a,0,0,path)
+
+    
+def CLBAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
+    CLBSession = SessionData(0.42,170,10000)
+    
+    for i in range(0,20):
+        0 #tbd
+    
+    AVLrt.reStartAVL()
+    operAVL(AVLrt,resPath)
+
+
+def CRZAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
+    CRZSession = SessionData(0.42,245,30000)
+    
+    AVLrt.reStartAVL()
+    operAVL(AVLrt,resPath)
+    
+    
+def DESAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
+    DESSession = SessionData(0.42,220,30000)
+    
+    for i in range(0,20):
+        0 #tbd
+        
+    AVLrt.reStartAVL()
+    operAVL(AVLrt,resPath)
+    
+def LDGAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
+    LDGSession = SessionData(0.42,135,0)
+    
+    Friction = ACFT.Mass*0.01*gAcc
+    
+    for i in range(0,20):
+        0 #tbd
+    
+    AVLrt.reStartAVL()
+    operAVL(AVLrt,resPath)
+
+
+def TaxiAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
+    Friction = ACFT.Mass*0.01*gAcc
+
+    AVLrt.reStartAVL()
+    operAVL(AVLrt,resPath)

@@ -16,6 +16,7 @@ def createMassFile(name):
 
 class runtime:
     def __init__(self,AVLnm,Massnm,Runnm):
+        self.AVLUp = 0
         self.RunFileName = Runnm
         self.AVLFileName = AVLnm
         self.MassFileName = Massnm
@@ -24,23 +25,39 @@ class runtime:
     
     def StartAVL(self):
         if 'darwin' in sys.platform:
+            self.AVLUp = 1
             return subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
+            self.AVLUp = 0
         else:
+            self.AVLUp = 1
             return subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
+            self.AVLUp = 0
+
+    def reStartAVL(self):
+        if 'darwin' in sys.platform:
+            self.AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
+            self.AVLUp = 1
+        else:
+            self.AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
+            self.AVLUp = 1
 
     def createRunFile(self):
         RunFile = open(self.RunFileName,"w")
-        #tbd
+        RunFile.write(" ---------------------------------------------\n Run case  1:  Empty")
         RunFile.close()
 
-    def modifyRunFile(self,var,value):
+    def readRunFile(self):
         RunFile = open(self.RunFileName,"r")
-        #tbd
-        RunFile.close()
+        return RunFile.readlines()
 
+    def appendRunFile(self,stuff:str):
+        RunFile = open(self.RunFileName,"a")
+        RunFile.write(str)
+        
+    def overwriteRunFile(self,stuffs:list[str]):
         RunFile = open(self.RunFileName,"w")
-        #tbd
-        RunFile.close()
+        RunFile.writelines(stuffs)
+
 
 
     def readRunFileName(self):
@@ -63,6 +80,8 @@ class runtime:
         
     def AVLcommand(self,cmd:str):
         print(cmd,file=self.AVLSession.stdin)
+        if cmd.strip() =="Quit":
+            self.AVLUp = 0;
     
     def AVLreturn(self):
         print(file=self.AVLSession.stdin)
