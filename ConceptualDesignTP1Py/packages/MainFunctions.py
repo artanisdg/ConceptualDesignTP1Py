@@ -76,3 +76,9 @@ def analyzeAero():
 
 def analyzePerf():
     0 #tbd
+    
+class SessionData:
+    ReqEnergy:float #in Wh
+    MaxThrust:float #in N
+    ThrustEfficiency:float #in floating point (Eprop * Emotor)
+    WingDensity:float #in kg/m^2 for wing area

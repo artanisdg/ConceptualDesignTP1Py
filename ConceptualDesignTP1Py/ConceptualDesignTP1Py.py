@@ -21,6 +21,6 @@ import packages.MainFunctions as MainF
 RTTest = AVLF.runtime("T1/Test.avl","T1/Test.mass","T1/Test.run")
 TestAC = Acft.Aircraft(1,"Test")
 
-MainF.initSizing(RTTest,TestAC,"Test.txt",10)
+MainF.initSizing(RTTest,TestAC,"Test.txt",20)
 
 MainF.runAVL(RTTest,"T1/Results.txt")

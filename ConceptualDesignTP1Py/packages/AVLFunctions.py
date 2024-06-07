@@ -68,11 +68,3 @@ class runtime:
         print(file=self.AVLSession.stdin)
         
     #--------------End of Class : runtime----------------------
-
-
-# print("PLOP",file=avl.stdin)
-# print("G",file=avl.stdin)
-# print(file=avl.stdin)
-# print("Quit",file=avl.stdin)
-
-

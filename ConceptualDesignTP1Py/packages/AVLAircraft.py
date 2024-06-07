@@ -453,7 +453,7 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     intervalFuseV:float = Acft.Fuselage.Height/10
     for i in range(0,4):
         Chord:float = Acft.Fuselage.Length-i*((Acft.Fuselage.Height/2)*math.tan(Acft.Fuselage.SlopeUpper/180*math.pi))
-        LEx:float = i*((Acft.Fuselage.Height/2)*math.tan(Acft.Fuselage.SlopeUpper/180*math.pi))
+        LEx:float = i*(intervalFuseV*math.tan(Acft.Fuselage.SlopeUpper/180*math.pi))
         LEz:float = intervalFuseV*i
         AVLFile.write("SECTION\n")
         AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
@@ -473,7 +473,7 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     intervalFuseV:float = Acft.Fuselage.Height/10
     for i in range(0,4):
         Chord:float = Acft.Fuselage.Length-i*((Acft.Fuselage.Height/2)*math.tan(Acft.Fuselage.SlopeLower/180*math.pi))
-        LEx:float = i*((Acft.Fuselage.Height/2)*math.tan(Acft.Fuselage.SlopeLower/180*math.pi))
+        LEx:float = i*(intervalFuseV*math.tan(Acft.Fuselage.SlopeLower/180*math.pi))
         LEz:float = -intervalFuseV*i
         AVLFile.write("SECTION\n")
         AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")

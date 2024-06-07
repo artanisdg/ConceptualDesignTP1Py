@@ -5,10 +5,10 @@ ModelType=1
 
 Wing
 
-AttachPos=5,1.5,3
+AttachPos=5,0,1.5
 CoM=5,5,0
-RootChord=10
-TipChord=3
+RootChord=4
+TipChord=2
 SpanHalf=15
 Sweep=35
 Airfoil=2412
