@@ -16,7 +16,7 @@ def initSizing(avl:AVLF.runtime,ACFT:Acft.Aircraft,pth:string,res:int):
     ACFT.ReadFromTxt(pth)
     setBattery(ACFT,200,5000,0.66)
     ACFT.CalcCoM()
-    Acft.WriteACtoFile(ACFT,avl,res)
+    Acft.WriteACtoFile(ACFT,avl,res,0.42)
 
 def setBattery(ACFT:Acft.Aircraft,DensityWhkg,WhReq,WingBatteryRatio:float):
     BattGW = WhReq/DensityWhkg
@@ -68,10 +68,8 @@ def setupAVL(RTime:AVLF.runtime):
     RTime.AVLcommand(("MASS "+masF))
     RTime.AVLcommand(("MSET 0"))
 
-def operAVL(RTime:AVLF.runtime,Mach,Alpha,Flap,Elevator,resPath:str):
+def operAVL(RTime:AVLF.runtime,Alpha,Flap,Elevator,resPath:str):
     RTime.AVLcommand("OPER")
-    #if Mach != 0:
-    #    RTime.AVLcommand("M M "+str(Mach))
     if Alpha != 0:
         RTime.AVLcommand("A A "+str(Alpha))
     if Flap != 0:
@@ -97,7 +95,10 @@ class LimitationData:
     MaxPower:float #in W
     ThrustEfficiency:float #in floating point (Eprop * Emotor)
 
-class SessionData:
+class Session:
+    AVLrt:AVLF.runtime
+    AC:Acft.Aircraft
+    Folder:str
     Mach = 0.42
     VmpsT = 245/1.94384 #245KTAS
     Alt = 30000/3.28084 #inMeters
@@ -106,7 +107,10 @@ class SessionData:
     rhoAlt = Alt*3.28084/10000
     rho = float(rhoSet[0])
     
-    def __init__(self,Mach,Vktas,Altft):
+    def __init__(self,Mach,Vktas,Altft,avl:AVLF.runtime,Ac:Acft.Aircraft,fldr:str):
+        self.AVLrt = avl
+        self.AC = Ac
+        self.Folder = fldr
         self.Mach = Mach; self.VmpsT = Vktas/1.94384; self.Alt = Altft/3.28084
         self.rhoAlt = self.Alt*3.28084/10000
         if self.rhoAlt < 1:
@@ -116,23 +120,42 @@ class SessionData:
         elif self.rhoAlt < 3:
             self.rho = (self.rhoAlt-2)*self.rhoSet[3]+(3-self.rhoAlt)*self.rhoSet[2]
     
+    def ChangeFolder(self,fldr:str):
+        self.Folder = fldr
+        self.AVLrt.setAVLFileName(fldr+self.AVLrt.readAVLFileName())
+        self.AVLrt.setMassFileName(fldr+self.AVLrt.readMassFileName())
+    
+    def CreateFiles(self,name:str):
+        self.AVLrt.setAVLFileName(self.Folder+"/"+name+".avl")
+        self.AVLrt.setMassFileName(self.Folder+"/"+name+".mass")
+        Acft.WriteACtoFile(self.AC,self.AVLrt,20,self.Mach)
+        
+    def runSession(self,Alpha,Flap,Elev,resP:str):
+        self.AVLrt.reStartAVL()
+        setupAVL(self.AVLrt)
+        operAVL(self.AVLrt,Alpha,Flap,Elev,self.Folder+"/"+resP)
+        
+
+    
 
 def TOAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
-    TOSession = SessionData(0.212,10,0)
+    MaxMach = 0.212
+    TOSession = Session(MaxMach,140,0,AVLrt,ACFT,resFolder)
     
     Friction = ACFT.Mass*0.01*gAcc
     
     
     for a in range(8,15):
         for i in range(1,20):
-            path:str = resFolder+"/Result_a"+str(a)+"_m"+str(round(TOSession.Mach*i/20,2))+".txt"
-            AVLrt.reStartAVL()
-            setupAVL(AVLrt)
-            operAVL(AVLrt,TOSession.Mach*i/20,a,0,0,path)
+            name:str = "Test_a"+str(a)+"_m"+str(MaxMach*i/20)
+            res:str = name+"_res.txt"
+            TOSession.Mach = MaxMach*i/20
+            TOSession.CreateFiles(name)
+            TOSession.runSession(a,0,0,res)
 
     
 def CLBAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    CLBSession = SessionData(0.42,170,10000)
+    CLBSession = Session(0.42,170,10000)
     
     for i in range(0,20):
         0 #tbd
@@ -142,14 +165,14 @@ def CLBAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
 
 
 def CRZAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    CRZSession = SessionData(0.42,245,30000)
+    CRZSession = Session(0.42,245,30000)
     
     AVLrt.reStartAVL()
     operAVL(AVLrt,resPath)
     
     
 def DESAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    DESSession = SessionData(0.42,220,30000)
+    DESSession = Session(0.42,220,30000)
     
     for i in range(0,20):
         0 #tbd
@@ -158,7 +181,7 @@ def DESAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
     operAVL(AVLrt,resPath)
     
 def LDGAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    LDGSession = SessionData(0.42,135,0)
+    LDGSession = Session(0.42,135,0)
     
     Friction = ACFT.Mass*0.01*gAcc
     

@@ -16,7 +16,6 @@ def createMassFile(name):
 
 class runtime:
     def __init__(self,AVLnm,Massnm,Runnm):
-        self.AVLUp = 0
         self.RunFileName = Runnm
         self.AVLFileName = AVLnm
         self.MassFileName = Massnm
@@ -25,21 +24,15 @@ class runtime:
     
     def StartAVL(self):
         if 'darwin' in sys.platform:
-            self.AVLUp = 1
             return subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
-            self.AVLUp = 0
         else:
-            self.AVLUp = 1
             return subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
-            self.AVLUp = 0
 
     def reStartAVL(self):
         if 'darwin' in sys.platform:
             self.AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
-            self.AVLUp = 1
         else:
             self.AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
-            self.AVLUp = 1
 
     def createRunFile(self):
         RunFile = open(self.RunFileName,"w")
@@ -80,8 +73,6 @@ class runtime:
         
     def AVLcommand(self,cmd:str):
         print(cmd,file=self.AVLSession.stdin)
-        if cmd.strip() =="Quit":
-            self.AVLUp = 0;
     
     def AVLreturn(self):
         print(file=self.AVLSession.stdin)

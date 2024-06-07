@@ -369,22 +369,26 @@ class Aircraft:
     #--------------End of Class : Aircraft----------------------
         
 
-def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
+def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int, Mach : float):
     AVLpath = runtm.readAVLFileName()
     MassPath = runtm.readMassFileName()
     
     AVLFile = open(AVLpath,"w")
     
+    Cref = (Acft.Wing.RootChord+Acft.Wing.TipChord)/2
+    Sref = Cref*Acft.Wing.SpanHalf*2
+    Bref = Acft.Wing.SpanHalf*2
+    
     AVLFile.write(Acft.Name+"\n")
     AVLFile.write("\n")
     AVLFile.write("#Mach\n")
-    AVLFile.write(" 0.42\n")
+    AVLFile.write(" "+str(round(Mach,2))+"\n")
     AVLFile.write("\n")
     AVLFile.write("#IYsym   IZsym   Zsym\n")
     AVLFile.write(" 0       0       0.0\n")
     AVLFile.write("\n")
     AVLFile.write("#Sref    Cref    Bref\n")
-    AVLFile.write("1260.0   11.0    113.0\n")
+    AVLFile.write(str(round(Sref,2))+"   "+str(round(Cref,2))+"    "+str(round(Bref,2))+"\n")
     AVLFile.write("\n")
     AVLFile.write("#Xref    Yref    Zref\n")
     AVLFile.write(str(round(Acft.CoM[0],2))+"     "+str(round(Acft.CoM[1],2))+"     "+str(round(Acft.CoM[2],2))+"\n")
