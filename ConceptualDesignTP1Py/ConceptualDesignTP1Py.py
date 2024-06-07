@@ -13,8 +13,13 @@ import packages.MainFunctions as MainF
 
 
 
-Specs = open("Specs1.csv","a")
-Specs.write("C, R, S, V")
-Specs.close()
+# Specs = open("Specs1.csv","a")
+# Specs.write("C, R, S, V")
+# Specs.close()
 
+s = [1,1,1]
+v = [2,2,2]
+L = s+v
+
+print(L)
 

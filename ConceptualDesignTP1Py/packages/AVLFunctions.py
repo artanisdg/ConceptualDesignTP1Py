@@ -14,9 +14,11 @@ if 'darwin' in sys.platform:
 else:
     AVLSession = subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
 
-def createAVLFile(name): 0
+def createAVLFile(name):
+    0 #Do I really need this?
 
-def createMassFile(name): 0
+def createMassFile(name):
+    0 #Do I really need this?
 
 class runtime:
     def __init__(self,AVLnm,Massnm,Runnm):
@@ -27,10 +29,17 @@ class runtime:
     
     def createRunFile(self):
         RunFile = open(self.RunFileName,"w")
-
+        #tbd
+        RunFile.close()
 
     def modifyRunFile(self,var,value):
         RunFile = open(self.RunFileName,"r")
+        #tbd
+        RunFile.close()
+
+        RunFile = open(self.RunFileName,"w")
+        #tbd
+        RunFile.close()
 
 
     def readRunFileName(self):
@@ -41,6 +50,15 @@ class runtime:
     
     def readMassFileName(self):
         return self.MassFileName
+    
+    def setRunFileName(self,input):
+        self.RunFileName=input
+    
+    def setAVLFileName(self,input):
+        self.AVLFileName=input
+    
+    def setMassFileName(self,input):
+        self.MassFileName=input
     
     #--------------End of Class : runtime----------------------
 

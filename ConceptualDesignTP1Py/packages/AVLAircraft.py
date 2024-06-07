@@ -35,6 +35,7 @@ class Aircraft:
         Airfoil = 2412
         Ainc = 0
         Mass = 0
+
         #--------End of SubClass : Wing--------
 
     class Fuselage:
@@ -83,6 +84,18 @@ class Aircraft:
         Length = 0
         Mass = 0
         #--------End of SubClass : MotorPod--------
+    
+    class Battery:
+        class CoM:
+            def __init__(self):
+                self.L = [0,0,0]
+                self.R = [0,0,0]
+                self.F = [0,0,0]
+        class Mass:
+            L = 0
+            R = 0
+            F = 0
+        #--------End of SubClass : Battery--------
         
     def ReadFromTxt(self,path:string):
         AcftTxt = open(path,"r")
@@ -301,6 +314,14 @@ class Aircraft:
                 Key = Key+1
         if Key == Tgt:
             print("All Components Completely Loaded")
+        
+        self.Battery.CoM.R[0] = self.Wing.AttachPoint[0] + self.Wing.CoM[0]
+        self.Battery.CoM.R[1] = self.Wing.AttachPoint[1] + self.Wing.CoM[1]
+        self.Battery.CoM.R[2] = self.Wing.AttachPoint[2] + self.Wing.CoM[2]
+
+        self.Battery.CoM.L[0] = self.Wing.AttachPoint[0] + self.Wing.CoM[0]
+        self.Battery.CoM.L[1] = -self.Wing.AttachPoint[1] - self.Wing.CoM[1]
+        self.Battery.CoM.L[2] = self.Wing.AttachPoint[2] + self.Wing.CoM[2]
         #End of ReadFromTxt
 
         
@@ -518,11 +539,54 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int):
     #tbd
 
     AVLFile.close()
-
-    MassFile = open(MassPath,"w")
+    #End of Writing to AVLFile
 
     #Write to MassFile
-    #tbd
+    MassFile = open(MassPath,"w")
+
+    MassFile.write("#  "+Acft.Name+"\n#\n#  Dimensional unit and parameter data.\n#  Mass & Inertia breakdown.\n")
+    MassFile.write("\n")
+
+    MassFile.write("Lunit = 1.0000 m\nMunit = 1.000  kg\nTunit = 1.0    s\n")
+    MassFile.write("#-------------------------\n")
+    MassFile.write("g   = 9.81\nrho = 1.225\n\n\n")
+    MassFile.write("#-------------------------\n")
+
+    MassFile.write("#  mass   x     y     z    [ Ixx     Iyy    Izz     Ixy   Ixz   Iyz ]\n")
+    MassFile.write("*   1.    1.    1.    1.     1.     1.      1.      1.    1.    1.\n")
+    MassFile.write("+   0.    0.    0.    0.     0.     0.      0.      0.    0.    0.\n")
+
+    WingCoM = None
+    for i in range(0,2):
+        WingCoM[i] = Acft.Wing.AttachPoint[i]+Acft.Wing.CoM[i]
+    WingAvgChord = (Acft.Wing.RootChord+Acft.Wing.TipChord)/2
+    IxxWing = Acft.Wing.Mass*(Acft.Wing.SpanHalf^3)*WingAvgChord/12
+    IyyWing = Acft.Wing.Mass*Acft.Wing.SpanHalf*(WingAvgChord^3)/12
+    IzzWing = Acft.Wing.Mass*Acft.Wing.SpanHalf*(WingAvgChord^3)/12
+    MassFile.write("   "+Acft.Wing.Mass+"   "+WingCoM[0]+"   "+WingCoM[1]+"   "+WingCoM[2]+"    "+IxxWing+"    "+IyyWing+"    "+IzzWing+"     ! Wing\n")
+
+    IxxFuse = Acft.Fuselage.Mass*(Acft.Fuselage.Height^3)*Acft.Fuselage.Length/12
+    IyyFuse = Acft.Fuselage.Mass*Acft.Fuselage.Height*(Acft.Fuselage.Length^3)/12
+    IzzFuse = Acft.Fuselage.Mass*Acft.Fuselage.Width*(Acft.Fuselage.Length^3)/12
+    MassFile.write("   "+Acft.Fuselage.Mass+"   "+Acft.Fuselage.CoM[0]+"   "+Acft.Fuselage.CoM[1]+"   "+Acft.Fuselage.CoM[2]+"    "+IxxFuse+"    "+IyyFuse+"    "+IzzFuse+"     ! Fuselage\n")
+    
+    HStabCoM = None
+    for i in range(0,2):
+        HStabCoM[i] = Acft.HStab.AttachPoint[i]+Acft.HStab.CoM[i]
+    HStabAvgChord = (Acft.HStab.RootChord+Acft.HStab.TipChord)/2
+    IxxHStab = Acft.HStab.Mass*(Acft.HStab.SpanHalf^3)*HStabAvgChord/12
+    IyyHStab = Acft.HStab.Mass*Acft.HStab.SpanHalf*(HStabAvgChord^3)/12
+    IzzHStab = Acft.HStab.Mass*Acft.HStab.SpanHalf*(HStabAvgChord^3)/12
+    MassFile.write("   "+Acft.HStab.Mass+"   "+HStabCoM[0]+"   "+HStabCoM[1]+"   "+HStabCoM[2]+"     "+IxxHStab+"    "+IyyHStab+"    "+IzzHStab+"     ! HStab\n")
+
+    VStabCoM = None
+    for i in range(0,2):
+        VStabCoM[i] = Acft.VStab.AttachPoint[i]+Acft.VStab.CoM[i]
+    VStabAvgChord = (Acft.VStab.RootChord+Acft.VStab.TipChord)/2
+    IxxVStab = Acft.VStab.Mass*(Acft.VStab.Span^3)*VStabAvgChord/12
+    IyyVStab = Acft.VStab.Mass*Acft.VStab.Span*(VStabAvgChord^3)/12
+    IzzVStab = Acft.VStab.Mass*Acft.VStab.Span*(VStabAvgChord^3)/12
+    MassFile.write("   "+Acft.VStab.Mass+"   "+VStabCoM[0]+"   "+VStabCoM[1]+"   "+VStabCoM[2]+"     "+IxxVStab+"    "+IyyVStab+"    "+IzzVStab+"     ! VStab\n")
 
     MassFile.close()
 
