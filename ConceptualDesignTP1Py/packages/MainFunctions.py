@@ -1,11 +1,10 @@
-import os
-import sys
+import os, sys
 import math
 import string
 import time
 import numpy
 
-gAcc = 9.80665 #m/s^2
+gAcc = 9.80665 #m/s**2
 
 if 'darwin' in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,13 +38,13 @@ def resizeAC(ACFT:Acft.Aircraft,option:int):
         ACFT.HStab.SpanHalf = ACFT.HStab.SpanHalf * 1.05
         ACFT.HStab.RootChord = ACFT.HStab.RootChord * 1.05
         ACFT.HStab.TipChord = ACFT.HStab.TipChord * 1.05
-        ACFT.HStab.Mass = ACFT.HStab.Mass * (1.05^2)
+        ACFT.HStab.Mass = ACFT.HStab.Mass * (1.05**2)
         ACFT.HStab.CoM[0] = ACFT.HStab.CoM[0] * 1.05
     elif option == 3: #VStab too small
         ACFT.VStab.Span = ACFT.VStab.Span * 1.05
         ACFT.VStab.RootChord = ACFT.VStab.Span * 1.05
         ACFT.VStab.TipChord = ACFT.VStab.Span * 1.05
-        ACFT.VStab.Mass = ACFT.VStab.Mass * (1.05^2)
+        ACFT.VStab.Mass = ACFT.VStab.Mass * (1.05**2)
         ACFT.VStab.CoM[0] = ACFT.VStab.CoM[0] * 1.05
     elif option == 4: #CG too fwd, Shift Battery CoM
         ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] + 0.5
@@ -121,6 +120,22 @@ class Session:
         self.AVLrt = avl
         self.ACFT = Ac
         self.Folder = fldr
+        self.CLArray = numpy.empty(shape=(17,4,18),dtype=float)
+        self.CDArray = numpy.empty(shape=(17,4,18),dtype=float)
+        self.CMArray = numpy.empty(shape=(17,4,18),dtype=float)
+        self.NPArray = numpy.empty(shape=(17,4,18),dtype=float)
+        cur_dir = os.getcwd()
+        folder_path = os.path.join(cur_dir,fldr)
+        if os.path.exists(folder_path):
+            print("Session created, folder exists")
+        else:
+            try:
+                os.mkdir(folder_path)
+                print("Session created, folder made")
+            except:    
+                print("Session creation failed, folder not made")
+                time.sleep(10)
+
     
     def ChangeFolder(self,fldr:str):
         self.Folder = fldr
@@ -136,6 +151,49 @@ class Session:
         self.AVLrt.reStartAVL()
         setupAVL(self.AVLrt)
         operAVL(self.AVLrt,Alpha,Flap,Elev,self.Folder+"/"+resP)
+    
+    def readResult(self,Alpha,Flap,Elev,resP:str):
+        try:
+            resFile = open(self.Folder+"/"+resP,"r")
+            resLines = resFile.readlines()
+        except:
+            print("file not found - a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+            time.sleep(2)
+            return 1
+            
+        for line in resLines:
+            line = line.strip()
+            line = line.split('  ')
+            k:list[str] = []
+            for word in line:
+                word = word.strip()
+                word = word.strip('=')
+                word = word.strip()
+                if (word != '=') and (word != ''):
+                    words = word.split('=')
+                    k = k + words
+            if k!=[]:
+                line = k
+            line = [word.strip() for word in line]
+            l = len(line)
+            if line[0] == "CLtot":
+                self.CLArray[Alpha+2,round(Flap/2),5-Elev] = float(line[1])
+                print("CLtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+            if line[0] == "CDtot":
+                self.CDArray[Alpha+2,round(Flap/2),5-Elev] = float(line[1])
+                print("CDtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+            if l > 2:
+                if line[2] == "Cmtot":
+                    self.CMArray[Alpha+2,round(Flap/2),5-Elev] = float(line[3])
+                    print("Cmtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+                if line[1] == "Xnp":
+                    self.NPArray[Alpha+2,round(Flap/2),5-Elev] = float(line[2])
+                    print("XNP Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+        return 0
+        
+        
+        
+
         
     def AeroAnalysis(self):#,CLArray:list[float],CDArray:list[float],):
         
@@ -145,17 +203,79 @@ class Session:
         for a in range(-2,15,1):
             for f in range(0,7,2):
                 for e in range(5,-13,-1):
-                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
+                    res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
                     self.runSession(a,f,e,res)
                     time.sleep(0.5)
+                    
             time.sleep(5)
-                
+        
+        time.sleep(10)
 
-def TOAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
-    MaxMach = 0.212
-    TOSession = Session(MaxMach,140,0,AVLrt,ACFT,resFolder)
+        for a in range(-2,15,1):
+            for f in range(0,7,2):
+                for e in range(5,-13,-1):
+                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
+                    i = 0
+                    while 1:
+                        if self.readResult(a,f,e,res) == 0:
+                            break
+                        else:
+                            if i>5:
+                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e))
+                                break
+                            else:
+                                time.sleep(1.5)
+                                i += 1
+                            
+
+    def TOAnalysis(self,ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
+        self.Mach = 0.212
+        self.rho = self.rhoSet[0]
+        
+        Friction = ACFT.Mass*0.01.gAcc
+        
+        Cref = (Acft.Wing.RootChord+Acft.Wing.TipChord)/2
+        Sref = Cref*ACFT.Wing.SpanHalf*2
+
+        for f in range(0,7,2):
+            #TO Speed Determination
+            a = 12    
+            CLv2 = self.CLArray[a+2,round(f/2),0]
+            Lvsc = 0.5*CLv2*self.rho*Sref
+                
+            vs=numpy.sqrt(ACFT.Mass/Lvsc)
+            v2 = 1.2*vs
+            
+            Lv2 = 0.5*CLv2*(v2**2)*self.rho*Sref
+
+            #TO Run Analysis
+            CL = self.CLArray[0,round(f/2),0]
+            CD = self.CDArray[0,round(f/2),0]
+            
+            DragC = 0.5*CD*self.rho*Sref
+            
+            Thrust = 0
+            
+            F = Thrust - (DragC + Friction)
+            
+            TOEk = 0.5 * ACFT.Mass * (v2**2)
+            
+            TODR = TOEk / F
+            
+            if TODR > 
+
+            V = numpy.sqrt((F*762)/(ACFT.Mass*0.5))
+
+            #TO Rotation Analysis
+            for a in range(0,10,1):
+                ElevPull = 0
+                for e in range(1,-13,-1):
+                    if self.CMArray[a+2,round(f/2),5-e]:
+                        
+
+        MaxMach = 0.212
     
-    Friction = ACFT.Mass*0.01*gAcc
+        Friction = ACFT.Mass*0.01*gAcc
     
 
     

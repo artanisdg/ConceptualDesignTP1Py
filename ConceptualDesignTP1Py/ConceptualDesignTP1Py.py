@@ -1,6 +1,4 @@
-from ast import main
-import os
-import sys
+import os, sys
 
 if 'darwin' in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +23,20 @@ MainF.initSizing(RTTest,TestAC,"Test.txt",20)
 
 TestSession = MainF.Session(RTTest,TestAC,"TestSession")
 
-TestSession.AeroAnalysis()
+
+while 1:
+    TestSession.AeroAnalysis()
+
+while 1:
+    TO = TestSession.TOAnalysis()
+
+    if TO != 0:
+        0 #tbd
+        
+    else:
+        break
+    
+
 # MainF.CLBAnalysis()
 # MainF.CRZAnalysis()
 # MainF.DESAnalysis()
