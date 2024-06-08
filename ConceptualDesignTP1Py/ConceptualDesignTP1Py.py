@@ -14,11 +14,6 @@ import packages.AVLAircraft as Acft
 import packages.MainFunctions as MainF
 
 
-
-# Specs = open("Specs1.csv","a")
-# Specs.write("C, R, S, V")
-# Specs.close()
-
 RTTest = AVLF.runtime("T1/Test.avl","T1/Test.mass","T1/Test.run")
 TestAC = Acft.Aircraft(1,"Test")
 
@@ -28,7 +23,9 @@ MainF.initSizing(RTTest,TestAC,"Test.txt",20)
 
 #RTTest.reStartAVL()
 
-MainF.TOAnalysis(TestAC,RTTest,"TO1")
+TestSession = MainF.Session(RTTest,TestAC,"TestSession")
+
+TestSession.AeroAnalysis()
 # MainF.CLBAnalysis()
 # MainF.CRZAnalysis()
 # MainF.DESAnalysis()

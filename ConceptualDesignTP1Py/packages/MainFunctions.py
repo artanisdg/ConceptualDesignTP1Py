@@ -2,6 +2,8 @@ import os
 import sys
 import math
 import string
+import time
+import numpy
 
 gAcc = 9.80665 #m/s^2
 
@@ -70,6 +72,9 @@ def setupAVL(RTime:AVLF.runtime):
 
 def operAVL(RTime:AVLF.runtime,Alpha,Flap,Elevator,resPath:str):
     RTime.AVLcommand("OPER")
+    RTime.AVLcommand("O")
+    RTime.AVLcommand("V")
+    RTime.AVLreturn()
     if Alpha != 0:
         RTime.AVLcommand("A A "+str(Alpha))
     if Flap != 0:
@@ -77,7 +82,7 @@ def operAVL(RTime:AVLF.runtime,Alpha,Flap,Elevator,resPath:str):
     if Elevator != 0:
         RTime.AVLcommand("D3 D3 "+str(Elevator))
     RTime.AVLcommand("X")
-    RTime.AVLcommand("W")
+    RTime.AVLcommand("st")
     RTime.AVLcommand(resPath)
     RTime.AVLreturn()
     RTime.AVLreturn()
@@ -97,28 +102,25 @@ class LimitationData:
 
 class Session:
     AVLrt:AVLF.runtime
-    AC:Acft.Aircraft
+    ACFT:Acft.Aircraft
     Folder:str
     Mach = 0.42
-    VmpsT = 245/1.94384 #245KTAS
+    VmpsT = 245/1.94384 #245KTAS in m/s
     Alt = 30000/3.28084 #inMeters
     rhoSet = [1.225,0.90464,0.65269,0.45831]
     
     rhoAlt = Alt*3.28084/10000
-    rho = float(rhoSet[0])
+    rho = float(rhoSet[3])
     
-    def __init__(self,Mach,Vktas,Altft,avl:AVLF.runtime,Ac:Acft.Aircraft,fldr:str):
+    CLArray = numpy.empty(shape=(17,4,18),dtype=float)
+    CDArray = numpy.empty(shape=(17,4,18),dtype=float)
+    CMArray = numpy.empty(shape=(17,4,18),dtype=float)
+    NPArray = numpy.empty(shape=(17,4,18),dtype=float)
+    
+    def __init__(self,avl:AVLF.runtime,Ac:Acft.Aircraft,fldr:str):
         self.AVLrt = avl
-        self.AC = Ac
+        self.ACFT = Ac
         self.Folder = fldr
-        self.Mach = Mach; self.VmpsT = Vktas/1.94384; self.Alt = Altft/3.28084
-        self.rhoAlt = self.Alt*3.28084/10000
-        if self.rhoAlt < 1:
-            self.rho = self.rhoAlt*self.rhoSet[1]+(1-self.rhoAlt)*self.rhoSet[0]
-        elif self.rhoAlt < 2:
-            self.rho = (self.rhoAlt-1)*self.rhoSet[2]+(2-self.rhoAlt)*self.rhoSet[1]
-        elif self.rhoAlt < 3:
-            self.rho = (self.rhoAlt-2)*self.rhoSet[3]+(3-self.rhoAlt)*self.rhoSet[2]
     
     def ChangeFolder(self,fldr:str):
         self.Folder = fldr
@@ -128,15 +130,26 @@ class Session:
     def CreateFiles(self,name:str):
         self.AVLrt.setAVLFileName(self.Folder+"/"+name+".avl")
         self.AVLrt.setMassFileName(self.Folder+"/"+name+".mass")
-        Acft.WriteACtoFile(self.AC,self.AVLrt,20,self.Mach)
+        Acft.WriteACtoFile(self.ACFT,self.AVLrt,20,self.Mach)
         
     def runSession(self,Alpha,Flap,Elev,resP:str):
         self.AVLrt.reStartAVL()
         setupAVL(self.AVLrt)
         operAVL(self.AVLrt,Alpha,Flap,Elev,self.Folder+"/"+resP)
         
-
+    def AeroAnalysis(self):#,CLArray:list[float],CDArray:list[float],):
+        
     
+        self.CreateFiles(self.ACFT.Name)
+
+        for a in range(-2,15,1):
+            for f in range(0,7,2):
+                for e in range(5,-13,-1):
+                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
+                    self.runSession(a,f,e,res)
+                    time.sleep(0.5)
+            time.sleep(5)
+                
 
 def TOAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
     MaxMach = 0.212
@@ -144,14 +157,6 @@ def TOAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resFolder:str):
     
     Friction = ACFT.Mass*0.01*gAcc
     
-    
-    for a in range(8,15):
-        for i in range(1,20):
-            name:str = "Test_a"+str(a)+"_m"+str(MaxMach*i/20)
-            res:str = name+"_res.txt"
-            TOSession.Mach = MaxMach*i/20
-            TOSession.CreateFiles(name)
-            TOSession.runSession(a,0,0,res)
 
     
 def CLBAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
