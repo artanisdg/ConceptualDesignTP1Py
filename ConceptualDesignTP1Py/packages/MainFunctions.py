@@ -240,7 +240,7 @@ class Session:
         self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
         self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
         self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.TrimArray = numpy.empty(shape=((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),dtype=float)
+        self.TrimArray = numpy.empty(shape=(int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1)),dtype=float)
         cur_dir = os.getcwd()
         folder_path = os.path.join(cur_dir,fldr)
         if os.path.exists(folder_path):
