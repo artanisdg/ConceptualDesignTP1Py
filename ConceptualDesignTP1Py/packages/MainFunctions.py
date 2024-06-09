@@ -409,14 +409,14 @@ class Session:
 
         for a in range(self.DATA.AoAmin,3+1,1):
             for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-3]>0:
+                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-3]>0.1:
                     msg = ["CG Too Far Back\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
                     print(msg)
                     self.writeSTABMessage(msg)
 
                     return 5
                 
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-5)]<-0:
+                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-5)]<-0.1:
                     msg = ["CG Too Far Forward\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-5)])+"\n"]
                     print(msg)
                     self.writeSTABMessage(msg)
@@ -446,7 +446,7 @@ class Session:
 
                     return 5
 
-
+        self.writeSTABMessage("A/C in Trim\n")
         return 0
 
         
@@ -461,41 +461,46 @@ class Session:
         Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
         Sref = Cref*self.ACFT.Wing.SpanHalf*2
 
-        for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-            #TO Speed Determination
-            a = 12    
-            CLv2 = self.CLArray[a-self.DATA.AoAMin,round(f/2),0]
-            Lvsc = 0.5*CLv2*self.rho*Sref
-                
-            self.DATA.VsTO=numpy.sqrt(self.ACFT.Mass/Lvsc)
-            self.DATA.V2 = 1.2*self.DATA.VsTO
+        f = 6
+        #TO Speed Determination
+        a = 12    
+        CLv2 = self.CLArray[a-self.DATA.AoAmin,round(f/2),0]
+        Lvsc = 0.5*CLv2*self.rho*Sref
             
-            Lv2 = 0.5*CLv2*(self.DATA.V2**2)*self.rho*Sref
+        self.DATA.VsTO=numpy.sqrt(self.ACFT.Mass/Lvsc)
+        self.DATA.V2 = 1.2*self.DATA.VsTO
+        
+        Lv2 = 0.5*CLv2*(self.DATA.V2**2)*self.rho*Sref
 
-            #TO Run Analysis
-            CL = self.CLArray[0,round(f/2),0]
-            CD = self.CDArray[0,round(f/2),0]
-            v = 0
-            t = 0
-            d = 0
-            while 1:
-                Drag = 0.5*CD*(v**2)*self.rho*Sref
-                F = self.DATA.MaxThrust - (Friction + Drag)
-                v = v + F/self.ACFT.Mass
-                t = t + 1
-                d = d + v
-                if v > self.DATA.V2:
-                    if d<762:
-                        self.DATA.TODR = d
-                        break
-                    else:
-                        print("TODR > TODA")
+        #TO Run Analysis
+        CL = self.CLArray[0,round(f/2),0]
+        CD = self.CDArray[0,round(f/2),0]
+        v = 0
+        t = 0
+        d = 0
+        while 1:
+            Drag = 0.5*CD*(v**2)*self.rho*Sref
+            F = self.DATA.MaxThrust - (Friction + Drag)
+            v = v + F/self.ACFT.Mass
+            t = t + 1
+            d = d + v
+            if v > self.DATA.V2:
+                if d<762:
+                    self.DATA.TODR = d
+                    break
+                else:
+                    msg = ["TODR > TODA(762m)(marginal)\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]+["TODR = "+str(d)+"\n"]
+                    print(msg)
+                    self.writeTOMessage(msg)
 
-                        return 1
-                elif d>762:
-                    print("TO Failed : Thrust Insufficient")
+                    return 1
+            elif d>762:
+                print("TO Failed : Thrust Insufficient")
+                msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]
+                print(msg)
+                self.writeTOMessage(msg)
 
-                    return 6
+                return 6
                     
             
             #TO Energy Analysis            
