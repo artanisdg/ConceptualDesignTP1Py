@@ -236,11 +236,11 @@ class Session:
         self.ACFT = Ac
         self.Folder = fldr
         self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
-        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.TrimArray = numpy.empty(shape=(int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1)),dtype=float)
+        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.TrimArray = numpy.empty(shape=(round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1)),dtype=float)
         cur_dir = os.getcwd()
         folder_path = os.path.join(cur_dir,fldr)
         if os.path.exists(folder_path):
@@ -256,7 +256,7 @@ class Session:
         initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
 
         for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-            self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+            self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
         
         self.iteration = 0
 
