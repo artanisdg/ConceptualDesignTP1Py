@@ -12,29 +12,38 @@ import packages.AVLAircraft as Acft
 import packages.MainFunctions as MainF
 
 
-RTTest = AVLF.runtime("T1/Test.avl","T1/Test.mass","T1/Test.run")
+RTTest = AVLF.runtime("TestRun/Test.avl","TestRun/Test.mass","T1/Test.run")
 TestAC = Acft.Aircraft(1,"Test")
-
-MainF.initSizing(RTTest,TestAC,"Test.txt",20)
 
 #MainF.runAVL(RTTest,"T1/Results.txt")
 
 #RTTest.reStartAVL()
 
-TestSession = MainF.Session(RTTest,TestAC,"TestSession")
+TestPackage = MainF.PackageData
+
+TestSession = MainF.Session(RTTest,TestAC,"TestRun")
 
 
 while 1:
     TestSession.AeroAnalysis()
 
-while 1:
-    TO = TestSession.TOAnalysis()
+    STAB = TestSession.StabAnalysis()
+    if STAB != 0:
+        MainF.resizeAC(TestAC,STAB)
 
-    if TO != 0:
-        0 #tbd
-        
-    else:
-        break
+    if STAB == 0:
+        TO = TestSession.TOAnalysis()
+
+        if TO != 0:
+            MainF.resizeAC(TestAC,TO)
+            
+        if TO == 0:
+            CLB = TestSession.CLBAnalysis()
+
+            CRZ = TestSession.CRZAnalysis()
+
+
+time.sleep(1000)
     
 
 # MainF.CLBAnalysis()

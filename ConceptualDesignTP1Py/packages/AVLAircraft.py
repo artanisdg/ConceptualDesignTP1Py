@@ -309,32 +309,25 @@ class Aircraft:
             if G == 2:
                 print("Generic : Complete")
                 Key = Key+1
+                G = 0
             if W == 9:
                 print("Wing    : Complete")
                 Key = Key+1
+                W = 0
             if F == 8:
                 print("Fuselage: Complete")
                 Key = Key+1
+                F = 0
             if HS == 9:
                 print("HStab   : Complete")
                 Key = Key+1
+                HS = 0
             if VS == 8:
                 print("VStab   : Complete")
                 Key = Key+1
+                VS = 0
         if Key == Tgt:
             print("All Components Completely Loaded")
-        
-        self.Battery.CoM.R[0] = self.Wing.AttachPos[0] + self.Wing.CoM[0]
-        self.Battery.CoM.R[1] = self.Wing.AttachPos[1] + self.Wing.CoM[1]
-        self.Battery.CoM.R[2] = self.Wing.AttachPos[2] + self.Wing.CoM[2]
-
-        self.Battery.CoM.L[0] = self.Wing.AttachPos[0] + self.Wing.CoM[0]
-        self.Battery.CoM.L[1] = (-1)*self.Wing.AttachPos[1] - self.Wing.CoM[1]
-        self.Battery.CoM.L[2] = self.Wing.AttachPos[2] + self.Wing.CoM[2]
-
-        self.Battery.CoM.F[0] = self.Fuselage.CoM[0]
-        self.Battery.CoM.F[1] = self.Fuselage.CoM[1]
-        self.Battery.CoM.F[2] = self.Fuselage.CoM[2]
         #End of ReadFromTxt
 
         
@@ -423,25 +416,25 @@ def WriteACtoFile(Acft : Aircraft,runtm : AVLF.runtime, slices : int, Mach : flo
         AVLFile.write("\n")
 
 
-    #Write FuselageH
-    AVLFile.write("SURFACE\nFuselage Horizontal\n")
-    AVLFile.write("#Nchordwise  Cspace  Nspanwise  Sspace\n") 
-    AVLFile.write("10           1.0\n")
-    AVLFile.write("\n")
-    AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
-    AVLFile.write("\n")
-    AVLFile.write("TRANSLATE\n")
-    AVLFile.write("0.0  0.0  0.0\n\n\n")
+    # #Write FuselageH
+    # AVLFile.write("SURFACE\nFuselage Horizontal\n")
+    # AVLFile.write("#Nchordwise  Cspace  Nspanwise  Sspace\n") 
+    # AVLFile.write("10           1.0\n")
+    # AVLFile.write("\n")
+    # AVLFile.write("COMPONENT \n1\n\nYDUPLICATE \n0.0\n\nANGLE\n0.0\n\nSCALE\n1.0   1.0   1.0\n")
+    # AVLFile.write("\n")
+    # AVLFile.write("TRANSLATE\n")
+    # AVLFile.write("0.0  0.0  0.0\n\n\n")
 
-    intervalFuseH:float = Acft.Fuselage.Width/5
-    for i in range(0,4):
-        Chord:float = Acft.Fuselage.Length-i*(Acft.Fuselage.Width*math.tan(Acft.Fuselage.SlopeSide/180*math.pi))
-        LEx:float = i*(Acft.Fuselage.Width*math.tan(Acft.Fuselage.SlopeSide/180*math.pi))
-        LEy:float = intervalFuseH*i
-        AVLFile.write("SECTION\n")
-        AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
-        AVLFile.write(str(round(LEx,2))+"    "+str(round(LEy,2))+"    "+"0.0"+"     "+str(round(Chord,2))+"   0.    1          0.\n")
-        AVLFile.write("\n")
+    # intervalFuseH:float = Acft.Fuselage.Width/5
+    # for i in range(0,4):
+    #     Chord:float = Acft.Fuselage.Length-i*(Acft.Fuselage.Width*math.tan(Acft.Fuselage.SlopeSide/180*math.pi)/2)
+    #     LEx:float = i*(Acft.Fuselage.Width*math.tan(Acft.Fuselage.SlopeSide/180*math.pi)/2)
+    #     LEy:float = intervalFuseH*i
+    #     AVLFile.write("SECTION\n")
+    #     AVLFile.write("#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace\n")
+    #     AVLFile.write(str(round(LEx,2))+"    "+str(round(LEy,2))+"    "+"0.0"+"     "+str(round(Chord,2))+"   0.    1          0.\n")
+    #     AVLFile.write("\n")
 
     #Write FuselageVU
     AVLFile.write("SURFACE\nFuselage V Upper\n")

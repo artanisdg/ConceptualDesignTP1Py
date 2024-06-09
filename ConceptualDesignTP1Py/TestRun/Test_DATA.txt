@@ -1,0 +1,14 @@
+ReqEnergyTO = 50000
+ReqEnergyCLB = 50000
+ReqEnergyCRZ = 50000
+ReqEnergyDES = 50000
+ReqEnergyTAXI = 50000
+
+MaxThrust = 50000
+MaxPower = 200000
+ThrustEfficiency = 0.86
+
+
+AoARange = -2 , 14
+FlapRange = 0 , 6
+ElevRange = -12 , 5

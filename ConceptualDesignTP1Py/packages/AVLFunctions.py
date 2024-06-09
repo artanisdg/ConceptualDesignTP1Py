@@ -46,10 +46,12 @@ class runtime:
     def appendRunFile(self,stuff:str):
         RunFile = open(self.RunFileName,"a")
         RunFile.write(str)
+        RunFile.close()
         
     def overwriteRunFile(self,stuffs:list[str]):
         RunFile = open(self.RunFileName,"w")
         RunFile.writelines(stuffs)
+        RunFile.close()
 
 
 
