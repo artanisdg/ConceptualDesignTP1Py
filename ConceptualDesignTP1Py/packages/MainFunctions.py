@@ -527,22 +527,22 @@ class Session:
                 return 6
                     
             
-            #TO Energy Analysis            
-            self.DATA.ReqEnergy[0] = self.DATA.MaxThrust*self.DATA.TODR/self.DATA.ThrustEfficiency/3600
-            
+        #TO Energy Analysis            
+        self.DATA.ReqEnergy[0] = self.DATA.MaxThrust*self.DATA.TODR/self.DATA.ThrustEfficiency/3600
+        
 
-            TOFolder = self.Folder + "/Output"
-            if os.path.exists(TOFolder):
-                print("TODATA folder exists")
-            else:
-                try:
-                    os.mkdir(TOFolder)
-                    print("TODATA folder made")
-                except:    
-                    print("TODATA folder creation failed")
+        TOFolder = self.Folder + "/Output"
+        if os.path.exists(TOFolder):
+            print("TODATA folder exists")
+        else:
+            try:
+                os.mkdir(TOFolder)
+                print("TODATA folder made")
+            except:    
+                print("TODATA folder creation failed")
 
-            self.writeTOData()
-            return 0
+        self.writeTOData()
+        return 0
             
 
     def CLBAnalysis(self):
