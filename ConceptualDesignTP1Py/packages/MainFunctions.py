@@ -406,10 +406,10 @@ class Session:
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.05:
                     resizeAC(self.ACFT,15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                else:
+                elif i<=5 :
                     for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
                         for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                            res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[f/2])
+                            res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
                             self.runSession(a,f,e,res)
                             time.sleep(0.5)    
                         time.sleep(5)
