@@ -27,7 +27,7 @@ TestSession = MainF.Session(RTTest,TestAC,"TestRun")
 while 1:
     TestSession.AeroAnalysis()
 
-    STAB = TestSession.StabAnalysis()
+    STAB = TestSession.CGAnalysis()
     if STAB != 0:
         MainF.resizeAC(TestAC,STAB)
 

@@ -78,6 +78,10 @@ def resizeAC(ACFT:Acft.Aircraft,option:int):
         ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.25
     elif option == 15: #trim too up, trim down
         ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.25
+    elif option == 24: #trim too down, trim up a lot
+        ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.5
+    elif option == 25: #trim too up, trim down a lot
+        ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.5
     else:
         print("resizeAC Function Call Error")
     ACFT.CalcCoM()
@@ -225,15 +229,18 @@ class Session:
     CDArray = numpy.empty(shape=(17,4,18),dtype=float)
     CMArray = numpy.empty(shape=(17,4,18),dtype=float)
     NPArray = numpy.empty(shape=(17,4,18),dtype=float)
+
     
     def __init__(self,avl:AVLF.runtime,Ac:Acft.Aircraft,fldr:str):
         self.AVLrt = avl
         self.ACFT = Ac
         self.Folder = fldr
-        self.CLArray = numpy.empty(shape=(17,4,18),dtype=float)
-        self.CDArray = numpy.empty(shape=(17,4,18),dtype=float)
-        self.CMArray = numpy.empty(shape=(17,4,18),dtype=float)
-        self.NPArray = numpy.empty(shape=(17,4,18),dtype=float)
+        self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
+        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.TrimArray = numpy.empty(shape=((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),dtype=float)
         cur_dir = os.getcwd()
         folder_path = os.path.join(cur_dir,fldr)
         if os.path.exists(folder_path):
@@ -246,8 +253,10 @@ class Session:
                 print("Session creation failed, folder not made")
                 time.sleep(10)
                 
-        self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
         initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
+
+        for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
+            self.TrimArray[f/2] = self.ACFT.HStab.Ainc
         
         self.iteration = 0
 
@@ -368,35 +377,64 @@ class Session:
     
         self.CreateFiles(self.ACFT.Name)
 
-        for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
-            for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-                for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                    res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
-                    self.runSession(a,f,e,res)
-                    time.sleep(0.5)
-                    
-            time.sleep(5)
-        
-        time.sleep(10)
+        for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
+            while 1:
+                self.CreateFiles(self.ACFT.Name)
+                res:str = self.ACFT.Name+"-aero_stab_f"+str(f)
+                self.runSession(0,f,0,res)
+                time.sleep(5)
+                
+                if self.readResult(0,f,0,res) == 0:
+                    break
+                else:
+                    if i>5:
+                        print("file read abort - aero_stab_f"+str(f))
+                        break
+                    else:
+                        time.sleep(2)
+                        i += 1
+            while 1:
+                if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
+                    resizeAC(self.ACFT,24)
+                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
+                    resizeAC(self.ACFT,25)
+                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.05:
+                    resizeAC(self.ACFT,14)
+                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.05:
+                    resizeAC(self.ACFT,15)
+                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                else:
+                    for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
+                        for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
+                            res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[f/2])
+                            self.runSession(a,f,e,res)
+                            time.sleep(0.5)    
+                        time.sleep(5)
+                    time.sleep(5)
+                    break
+            
+            time.sleep(10)
 
-        for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
-            for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
+            for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
                 for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)
+                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[f/2])
                     i = 0
                     while 1:
                         if self.readResult(a,f,e,res) == 0:
                             break
                         else:
                             if i>5:
-                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e))
+                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[f/2]))
                                 break
                             else:
                                 time.sleep(1.5)
                                 i += 1
         self.iteration += 1                                
     
-    def StabAnalysis(self):
+    def CGAnalysis(self):
         STABFolder = self.Folder + "/Output"
         if os.path.exists(STABFolder):
             print("STABDATA folder exists")
@@ -422,20 +460,6 @@ class Session:
                     self.writeSTABMessage(msg)
                     
                     return 4
-
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-2]>0.1:
-                    msg = ["trim down required\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-2])+"\n"]
-                    print(msg)
-                    self.writeSTABMessage(msg)
-                    
-                    return 15
-                
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-2)]<-0.1:
-                    msg = ["trim up required\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-2)])+"\n"]
-                    print(msg)
-                    self.writeSTABMessage(msg)
-
-                    return 14
                 
         for a in range(4,self.DATA.AoAMax+1,1):
             for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
@@ -446,7 +470,7 @@ class Session:
 
                     return 5
 
-        self.writeSTABMessage("A/C in Trim\n")
+        self.writeSTABMessage("CG in Range\n")
         return 0
 
         
