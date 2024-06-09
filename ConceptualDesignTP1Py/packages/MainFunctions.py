@@ -420,14 +420,14 @@ class Session:
 
             for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
                 for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[f/2])
+                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
                     i = 0
                     while 1:
                         if self.readResult(a,f,e,res) == 0:
                             break
                         else:
                             if i>5:
-                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[f/2]))
+                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[round(f/2)]))
                                 break
                             else:
                                 time.sleep(1.5)
