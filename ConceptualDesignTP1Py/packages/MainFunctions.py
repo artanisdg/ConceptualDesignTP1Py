@@ -397,16 +397,16 @@ class Session:
             while 1:
                 if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
                     resizeAC(self.ACFT,24)
-                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
                     resizeAC(self.ACFT,25)
-                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.05:
                     resizeAC(self.ACFT,14)
-                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.05:
                     resizeAC(self.ACFT,15)
-                    self.TrimArray[f/2] = self.ACFT.HStab.Ainc
+                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 else:
                     for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
                         for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
