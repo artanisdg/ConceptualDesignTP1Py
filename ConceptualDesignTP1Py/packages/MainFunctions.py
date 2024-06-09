@@ -383,18 +383,17 @@ class Session:
                 res:str = self.ACFT.Name+"-aero_stab_f"+str(f)
                 self.runSession(0,f,0,res)
                 time.sleep(5)
-                
                 i = 0
-                if self.readResult(0,f,0,res) == 0:
-                    break
-                else:
-                    if i>5:
-                        print("file read abort - aero_stab_f"+str(f))
+                while 1:
+                    if self.readResult(0,f,0,res) == 0:
                         break
                     else:
-                        time.sleep(2)
-                        i += 1
-            while 1:
+                        if i>5:
+                            print("file read abort - aero_stab_f"+str(f))
+                            break
+                        else:
+                            time.sleep(2)
+                            i += 1
                 if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
                     resizeAC(self.ACFT,24)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
