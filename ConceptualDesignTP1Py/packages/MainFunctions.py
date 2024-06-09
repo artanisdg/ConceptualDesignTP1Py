@@ -384,6 +384,7 @@ class Session:
                 self.runSession(0,f,0,res)
                 time.sleep(5)
                 
+                i = 0
                 if self.readResult(0,f,0,res) == 0:
                     break
                 else:
