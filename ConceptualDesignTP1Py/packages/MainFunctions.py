@@ -236,10 +236,10 @@ class Session:
         self.ACFT = Ac
         self.Folder = fldr
         self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
-        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,(self.DATA.FlapMax-self.DATA.Flapmin)/2+1,self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,int((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
         self.TrimArray = numpy.empty(shape=((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),dtype=float)
         cur_dir = os.getcwd()
         folder_path = os.path.join(cur_dir,fldr)
