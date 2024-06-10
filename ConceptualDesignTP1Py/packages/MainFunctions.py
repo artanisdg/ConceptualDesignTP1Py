@@ -200,6 +200,7 @@ class PackageData:
     TODR:float = 0 #in m
 
     CLBRate:float = 0 #in m/s
+    CLBAngle:float = 0 #in deg
     CLBAoA:float = 0 #in deg
        
     Vref:float = 0 #in m/s
@@ -394,7 +395,7 @@ class Session:
                 self.CreateFiles(self.ACFT.Name)
                 res:str = self.ACFT.Name+"-aero_stab_f"+str(f)
                 self.runSession(0,f,0,res)
-                time.sleep(5)
+                time.sleep(3)
                 i = 0
                 while 1:
                     if self.readResult(0,f,0,res) == 0:
@@ -412,10 +413,10 @@ class Session:
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
                     resizeAC(self.ACFT,25)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.05:
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.025:
                     resizeAC(self.ACFT,14)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.05:
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.025:
                     resizeAC(self.ACFT,15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=5 :
@@ -427,7 +428,7 @@ class Session:
                         time.sleep(5)
                     time.sleep(5)
                     break
-            
+                time.sleep(3)
             time.sleep(10)
 
             for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
@@ -623,6 +624,7 @@ class Session:
             msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"]
 
             return 1
+        
         else:
             CLBFolder = self.Folder + "/Output"
             self.DATA.CLBRate = VVclb

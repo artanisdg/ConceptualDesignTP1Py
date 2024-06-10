@@ -29,6 +29,9 @@ class runtime:
             return subprocess.Popen(["avl.exe"],stdin=subprocess.PIPE, text=True)
 
     def reStartAVL(self):
+        self.AVLreturn()
+        self.AVLreturn()
+        self.AVLcommand("Quit")
         if 'darwin' in sys.platform:
             self.AVLSession = subprocess.Popen(["/Users/dong-gunjung/Desktop/CDTP1/ConceptualDesignTP1Py/ConceptualDesignTP1Py/avl335"],stdin=subprocess.PIPE, text=True)
         else:
