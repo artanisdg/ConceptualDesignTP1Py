@@ -387,7 +387,8 @@ class Session:
         
     def AeroAnalysis(self):
         
-    
+        Hung:list[str] = []
+
         self.CreateFiles(self.ACFT.Name)
 
         for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
@@ -441,10 +442,36 @@ class Session:
                         else:
                             if i>5:
                                 print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[round(f/2)]))
+                                Hung.append([a,f,e])
                                 break
                             else:
                                 time.sleep(1.5)
                                 i += 1
+        while 1:
+            V = Hung.pop()
+            a = V[0]; f = V[1]; e = V[2]
+            res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
+
+            self.ACFT.HStab.Ainc=self.TrimArray[round(f/2)]
+            self.CreateFiles(self.ACFT.Name)
+            self.runSession(a,f,e,res)
+
+            i = 0
+            while 1:
+                if self.readResult(a,f,e,res) == 0:
+                    break
+                else:
+                    if i>5:
+                        print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[round(f/2)]))
+                        Hung.append([a,f,e])
+                        break
+                    else:
+                        time.sleep(1.5)
+                        i += 1
+            if Hung == []:
+                print("Hung File Stack Empty")
+                break
+        
         self.iteration += 1                                
     
     def CGAnalysis(self):
@@ -560,13 +587,13 @@ class Session:
     def CLBAnalysis(self):
         self.Mach = 0.42
         self.VmpsT = 170/1.94384
-        self.rho = self.rhoSet[1]
+        self.rho = self.rhoSet[3]
         
         Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
         Sref = Cref*self.ACFT.Wing.SpanHalf*2
         
         Vclb = self.VmpsT
-        VVref = 900*0.00508
+        VVref = 900/196.85
         VVclb = 0
         elev = 0
         
@@ -609,6 +636,8 @@ class Session:
                             
                                 if Thrust > Drag:
                                     self.DATA.CLBAoA = a
+                                    self.DATA.CLBAngle = VVangle
+                                    self.DATA.CLBRate = VVclb
         
         CD0 = self.CDArray[self.DATA.CLBAoA-self.DATA.AoAmin,0,self.DATA.ElevFD-elev]
         Drag = 0.5*CD0*(Vclb**2)*self.rho*Sref
@@ -645,7 +674,7 @@ class Session:
     def CRZAnalysis(self):
         self.Mach = 0.42
         self.VmpsT = 245/1.94384
-        self.rho = self.rhoSet[1]
+        self.rho = self.rhoSet[3]
 
         return 0
     
