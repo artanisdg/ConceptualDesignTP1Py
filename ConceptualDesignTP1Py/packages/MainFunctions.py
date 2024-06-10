@@ -336,9 +336,9 @@ class Session:
 
         lines:list[str] = []
         lines = ["TO Flap : "+str(self.DATA.TOFlap)]
-        lines = ["VsTO : "+str(self.DATA.VsTO)+"\n"]
-        lines = lines + ["V2 : "+str(self.DATA.V2)+"\n"]
-        lines = lines + ["TODR : "+str(self.DATA.TODR)+"\n"]
+        lines = ["VsTO : "+str(self.DATA.VsTO)+"m/s\n"]
+        lines = lines + ["V2 : "+str(self.DATA.V2)+"m/s\n"]
+        lines = lines + ["TODR : "+str(self.DATA.TODR)+"m\n"]
         
         file.writelines(lines)
         
@@ -364,12 +364,24 @@ class Session:
         file.write("----------------------------------------------------\n")
 
         lines:list[str] = []
-        lines = ["CLB Rate : "+str(self.DATA.CLBRate)+"\n"]
+        lines = ["CLB Rate : "+str(self.DATA.CLBRate)+"m/s\n"]
+        lines = lines + ["CLB Angle : "+""]
         lines = lines + ["CLB AoA : "+str(self.DATA.CLBAoA)+"\n"]
         
         file.writelines(lines)
         
         file.close
+
+    def writeCLBMessage(self,message:list[str]):
+        file = open(self.Folder+"/Output/CLBData-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / CLB\n")
+        file.write("----------------------------------------------------\n")
+
+        file.writelines(message)
+        
+        file.close()
 
         
     def AeroAnalysis(self):
@@ -519,7 +531,6 @@ class Session:
 
                     return 1
             elif d>762:
-                print("TO Failed : Thrust Insufficient")
                 msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]
                 print(msg)
                 self.writeTOMessage(msg)
@@ -602,12 +613,14 @@ class Session:
         Drag = 0.5*CD0*(Vclb**2)*self.rho*Sref
 
         if Drag > Thrust:
-            print("Thrust insufficient")
+            msg = ["Thrust insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["Max Thrust : "+str(Thrust)+",  Drag : "+str(Drag)+"\n"]
+            print(msg)
+            self.writeCLBMessage(msg)
 
             return 6
                         
         elif VVclb < VVref:
-            print("Climbrate insufficient")
+            msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"]
 
             return 1
         else:
@@ -623,28 +636,26 @@ class Session:
                     print("CLBDATA folder made")
                 except:    
                     print("CLBDATA folder creation failed")
-            self.DATA.writeCLBData(CLBFolder,self.ACFT.Name+"-a"+str(self.DATA.CLBAoA))
+            self.writeCLBData()
             return 0
     
 
     def CRZAnalysis(self):
-        0
+        self.Mach = 0.42
+        self.VmpsT = 245/1.94384
+        self.rho = self.rhoSet[1]
 
-def CRZAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    CRZSession = Session(0.42,245,30000)
+        return 0
     
-    AVLrt.reStartAVL()
-    operAVL(AVLrt,resPath)
+    def DESAnalysis(self):
+        self.Mach = 0.42
+        self.VmpsT = 245/1.94384
+        self.rho = self.rhoSet[1]
+
+        return 0
+
     
     
-def DESAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    DESSession = Session(0.42,220,30000)
-    
-    for i in range(0,20):
-        0 #tbd
-        
-    AVLrt.reStartAVL()
-    operAVL(AVLrt,resPath)
     
 def LDGAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
     LDGSession = Session(0.42,135,0)
