@@ -580,17 +580,17 @@ class Session:
             Thrust = Thrust2
         
         for a in range(10,-1,-1):
-            for e in range(5,-13,-1):
+            for e in range(4,-10,-1):
                 CL = self.CLArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
                 CD = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
-                CM = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
+                CM = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
                 
                 if e > -12:
-                    CMm1 = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e-1)]
+                    CMm1 = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e-1)]
                 else:
                     CMm1 = CM
                 if e < 5:
-                    CMp1 = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e+1)]
+                    CMp1 = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e+1)]
                 else:
                     CMp1 = CM
                     
