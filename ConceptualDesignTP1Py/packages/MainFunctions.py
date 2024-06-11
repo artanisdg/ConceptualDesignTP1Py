@@ -1,40 +1,44 @@
-import os, sys
 import math
+import os
 import string
+import sys
 import time
 from tkinter import ROUND
+
 import numpy
 
-gAcc = 9.80665 #m/s**2
+gAcc = 9.80665  # m/s**2
 
-if 'darwin' in sys.platform:
+if "darwin" in sys.platform:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-import packages.AVLFunctions as AVLF
 import packages.AVLAircraft as Acft
+import packages.AVLFunctions as AVLF
 
-def initSizing(avl:AVLF.runtime,ACFT:Acft.Aircraft,pth:string,res:int):
+
+def initSizing(avl: AVLF.runtime, ACFT: Acft.Aircraft, pth: string, res: int):
     ACFT.ReadFromTxt(pth)
-    setBattery(ACFT,200,4000,0.66)
+    setBattery(ACFT, 200, 4000, 0.66)
     ACFT.CalcCoM()
-    Acft.WriteACtoFile(ACFT,avl,res,0.42)
+    Acft.WriteACtoFile(ACFT, avl, res, 0.42)
 
-def setBattery(ACFT:Acft.Aircraft,DensityWhkg,kWhReq,WingBatteryRatio:float):
-    BattGW = kWhReq*1000/DensityWhkg
-    BattWing = BattGW*WingBatteryRatio
-    BattBody = BattGW*(1-WingBatteryRatio)
-    ACFT.Battery.Mass.L = BattWing/2
-    ACFT.Battery.Mass.R = BattWing/2
+
+def setBattery(ACFT: Acft.Aircraft, DensityWhkg, kWhReq, WingBatteryRatio: float):
+    BattGW = kWhReq * 1000 / DensityWhkg
+    BattWing = BattGW * WingBatteryRatio
+    BattBody = BattGW * (1 - WingBatteryRatio)
+    ACFT.Battery.Mass.L = BattWing / 2
+    ACFT.Battery.Mass.R = BattWing / 2
     ACFT.Battery.Mass.F = BattBody
     ACFT.Wing.Mass = ACFT.Wing.Mass + ACFT.Battery.Mass.F * 0.025
-    
+
     ACFT.Battery.CoM.R[0] = ACFT.Wing.AttachPos[0] + ACFT.Wing.CoM[0]
     ACFT.Battery.CoM.R[1] = ACFT.Wing.AttachPos[1] + ACFT.Wing.CoM[1]
     ACFT.Battery.CoM.R[2] = ACFT.Wing.AttachPos[2] + ACFT.Wing.CoM[2]
 
     ACFT.Battery.CoM.L[0] = ACFT.Wing.AttachPos[0] + ACFT.Wing.CoM[0]
-    ACFT.Battery.CoM.L[1] = (-1)*ACFT.Wing.AttachPos[1] - ACFT.Wing.CoM[1]
+    ACFT.Battery.CoM.L[1] = (-1) * ACFT.Wing.AttachPos[1] - ACFT.Wing.CoM[1]
     ACFT.Battery.CoM.L[2] = ACFT.Wing.AttachPos[2] + ACFT.Wing.CoM[2]
 
     ACFT.Battery.CoM.F[0] = ACFT.Fuselage.CoM[0]
@@ -43,115 +47,128 @@ def setBattery(ACFT:Acft.Aircraft,DensityWhkg,kWhReq,WingBatteryRatio:float):
     print("Battery Calculation Complete")
 
 
-def resizeAC(ACFT:Acft.Aircraft,option:int):
-    if   option == 1: #CL too low
+def resizeAC(ACFT: Acft.Aircraft, option: int):
+    if option == 1:  # CL too low
         ACFT.Wing.SpanHalf = ACFT.Wing.SpanHalf * 1.05
         ACFT.Wing.Mass = ACFT.Wing.Mass * 1.08
-    #elif option == 99: #CL excessive
+    # elif option == 99: #CL excessive
     #    0#tbd
-    elif option == 2: #HStab too small
+    elif option == 2:  # HStab too small
         ACFT.HStab.SpanHalf = ACFT.HStab.SpanHalf * 1.05
         ACFT.HStab.RootChord = ACFT.HStab.RootChord * 1.05
         ACFT.HStab.TipChord = ACFT.HStab.TipChord * 1.05
         ACFT.HStab.Mass = ACFT.HStab.Mass * (1.05**2)
         ACFT.HStab.CoM[0] = ACFT.HStab.CoM[0] * 1.05
-    elif option == 3: #VStab too small
+    elif option == 3:  # VStab too small
         ACFT.VStab.Span = ACFT.VStab.Span * 1.05
         ACFT.VStab.RootChord = ACFT.VStab.Span * 1.05
         ACFT.VStab.TipChord = ACFT.VStab.Span * 1.05
         ACFT.VStab.Mass = ACFT.VStab.Mass * (1.05**2)
         ACFT.VStab.CoM[0] = ACFT.VStab.CoM[0] * 1.05
-    elif option == 4: #CG too fwd, Shift Battery CoM
+    elif option == 4:  # CG too fwd, Shift Battery CoM
         ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] + 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] + 0.10*0.5*(ACFT.Wing.RootChord+ACFT.Wing.TipChord)
-    elif option == 5: #CG too aft, Shift Battery CoM
+        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] + 0.10 * 0.5 * (
+            ACFT.Wing.RootChord + ACFT.Wing.TipChord
+        )
+    elif option == 5:  # CG too aft, Shift Battery CoM
         ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] - 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] - 0.10*0.5*(ACFT.Wing.RootChord+ACFT.Wing.TipChord)
-    elif option == 6: #Thrust insufficient
+        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] - 0.10 * 0.5 * (
+            ACFT.Wing.RootChord + ACFT.Wing.TipChord
+        )
+    elif option == 6:  # Thrust insufficient
         0
-    elif option == 11: #CL too low - increase chord
+    elif option == 11:  # CL too low - increase chord
         ACFT.Wing.RootChord = ACFT.Wing.RootChord * 1.05
         ACFT.Wing.Mass = ACFT.Wing.Mass * 1.05 + ACFT.Wing.BattMass
-    elif option == 12: #HStab ineffective -> Move Further Back
+    elif option == 12:  # HStab ineffective -> Move Further Back
         ACFT.HStab.AttachPos[0] = ACFT.HStab.AttachPos[0] + 0.3
-    elif option == 14: #trim too down, trim up
+    elif option == 14:  # trim too down, trim up
         ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.25
-    elif option == 15: #trim too up, trim down
+    elif option == 15:  # trim too up, trim down
         ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.25
-    elif option == 24: #trim too down, trim up a lot
+    elif option == 24:  # trim too down, trim up a lot
         ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.5
-    elif option == 25: #trim too up, trim down a lot
+    elif option == 25:  # trim too up, trim down a lot
         ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.5
     else:
         print("resizeAC Function Call Error")
     ACFT.CalcCoM()
-    
 
-def setupAVL(RTime:AVLF.runtime):
+
+def setupAVL(RTime: AVLF.runtime):
     avlF = RTime.readAVLFileName()
     masF = RTime.readMassFileName()
     runF = RTime.readRunFileName()
 
-    RTime.AVLcommand(("LOAD "+avlF))
-    RTime.AVLcommand(("MASS "+masF))
-    RTime.AVLcommand(("MSET 0"))
+    RTime.AVLcommand("LOAD " + avlF)
+    RTime.AVLcommand("MASS " + masF)
+    RTime.AVLcommand("MSET 0")
 
-def operAVL(RTime:AVLF.runtime,Alpha,Flap,Elevator,resPath:str):
+
+def operAVL(RTime: AVLF.runtime, Alpha, Flap, Elevator, resPath: str, threshold=30):
     RTime.AVLcommand("OPER")
     RTime.AVLcommand("O")
     RTime.AVLcommand("V")
     RTime.AVLreturn()
     if Alpha != 0:
-        RTime.AVLcommand("A A "+str(Alpha))
+        RTime.AVLcommand("A A " + str(Alpha))
     if Flap != 0:
-        RTime.AVLcommand("D1 D1 "+str(Flap))
+        RTime.AVLcommand("D1 D1 " + str(Flap))
     if Elevator != 0:
-        RTime.AVLcommand("D3 D3 "+str(Elevator))
+        RTime.AVLcommand("D3 D3 " + str(Elevator))
     RTime.AVLcommand("X")
-    
-    if os.path.exists(resPath):
-        os.remove(resPath)
-    else:
-        print("The Result file \""+resPath+"\" Does not yet exist")
 
     RTime.AVLcommand("st")
-    RTime.AVLcommand(resPath)
-    RTime.AVLreturn()
-    RTime.AVLreturn()
+    if os.path.exists(resPath):
+        # print("PATH EXISTS!", resPath)
+        RTime.AVLreturn()
+        RTime.AVLcommand("Quit")
+        return True
+    RTime.AVLcommand(os.path.relpath(resPath, os.getcwd()))
+    count = 0
+    while not os.path.exists(resPath) and count < threshold:
+        time.sleep(0.1)
+        count += 1
+    if count >= threshold:
+        return False
     RTime.AVLcommand("Quit")
+    return True
+
 
 def analyzeAero():
-    0 #tbd
+    0  # tbd
+
 
 def analyzePerf():
-    0 #tbd
-    
+    0  # tbd
+
+
 class PackageData:
-    def __init__(self,file:str):
-        file = open(file,'r')
+    def __init__(self, file: str):
+        file = open(file)
         linesTemp = file.readlines()
         for line in linesTemp:
             line = line.strip()
-            line = line.split('  ')
-            k:list[str] = []
+            line = line.split("  ")
+            k: list[str] = []
             for word in line:
                 word = word.strip()
-                word = word.strip('=')
+                word = word.strip("=")
                 word = word.strip()
-                if (word != '=') and (word != ''):
-                    words = word.split('=')
+                if (word != "=") and (word != ""):
+                    words = word.split("=")
                     k = k + words
-            if k!=[]:
+            if k != []:
                 line = k
             k = []
             for word in line:
                 word = word.strip()
-                word = word.strip('=')
+                word = word.strip("=")
                 word = word.strip()
-                if (word != ',') and (word != ''):
-                    words = word.split(',')
+                if (word != ",") and (word != ""):
+                    words = word.split(",")
                     k = k + words
-            if k!=[]:
+            if k != []:
                 line = k
             line = [word.strip() for word in line]
             l = len(line)
@@ -180,300 +197,327 @@ class PackageData:
             if line[0] == "ElevRange":
                 self.ElevFU = int(line[1])
                 self.ElevFD = int(line[2])
-        
 
-    ReqEnergy:list[float] = numpy.empty(shape=(5),dtype=float) #in Wh
-    MaxThrust:float = 0 #in N
-    MaxPower:float = 0 #in W
-    ThrustEfficiency:float = 0 #in floating point (Eprop * Emotor)
+    ReqEnergy: list[float] = numpy.empty(shape=(5), dtype=float)  # in Wh
+    MaxThrust: float = 0  # in N
+    MaxPower: float = 0  # in W
+    ThrustEfficiency: float = 0  # in floating point (Eprop * Emotor)
 
-    AoAmin:int
-    AoAMax:int
-    Flapmin:int
-    FlapMax:int
-    ElevFU:int
-    ElevFD:int
-    
-    TOFlap:float = 0 #in deg
-    VsTO:float = 0 #in m/s
-    V2:float = 0 #in m/s
-    TODR:float = 0 #in m
+    AoAmin: int
+    AoAMax: int
+    Flapmin: int
+    FlapMax: int
+    ElevFU: int
+    ElevFD: int
 
-    CLBRate:float = 0 #in m/s
-    CLBAngle:float = 0 #in deg
-    CLBAoA:float = 0 #in deg
-       
-    Vref:float = 0 #in m/s
-    LDR:float = 0 #in m
-    
+    TOFlap: float = 0  # in deg
+    VsTO: float = 0  # in m/s
+    V2: float = 0  # in m/s
+    TODR: float = 0  # in m
 
+    CLBRate: float = 0  # in m/s
+    CLBAngle: float = 0  # in deg
+    CLBAoA: float = 0  # in deg
+
+    Vref: float = 0  # in m/s
+    LDR: float = 0  # in m
 
 
 class Session:
-    AVLrt:AVLF.runtime
-    ACFT:Acft.Aircraft
-    DATA:PackageData
-    Folder:str
-    
+    AVLrt: AVLF.runtime
+    ACFT: Acft.Aircraft
+    DATA: PackageData
+    Folder: str
 
     iteration = 0
 
     Mach = 0.42
-    VmpsT = 245/1.94384 #245KTAS in m/s
-    Alt = 30000/3.28084 #inMeters
-    rhoSet = [1.225,0.90464,0.65269,0.45831]
-    
-    rhoAlt = Alt*3.28084/10000
-    rho = float(rhoSet[3])
-    
-    CLArray = numpy.empty(shape=(17,4,18),dtype=float)
-    CDArray = numpy.empty(shape=(17,4,18),dtype=float)
-    CMArray = numpy.empty(shape=(17,4,18),dtype=float)
-    NPArray = numpy.empty(shape=(17,4,18),dtype=float)
+    VmpsT = 245 / 1.94384  # 245KTAS in m/s
+    Alt = 30000 / 3.28084  # inMeters
+    rhoSet = [1.225, 0.90464, 0.65269, 0.45831]
 
-    
-    def __init__(self,avl:AVLF.runtime,Ac:Acft.Aircraft,fldr:str):
+    rhoAlt = Alt * 3.28084 / 10000
+    rho = float(rhoSet[3])
+
+    CLArray = numpy.empty(shape=(17, 4, 18), dtype=float)
+    CDArray = numpy.empty(shape=(17, 4, 18), dtype=float)
+    CMArray = numpy.empty(shape=(17, 4, 18), dtype=float)
+    NPArray = numpy.empty(shape=(17, 4, 18), dtype=float)
+
+    def __init__(self, avl: AVLF.runtime, Ac: Acft.Aircraft, fldr: str):
         self.AVLrt = avl
         self.ACFT = Ac
-        self.Folder = fldr
-        self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
-        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
-        self.TrimArray = numpy.empty(shape=(round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1)),dtype=float)
+        self.Folder = os.path.join(os.getcwd(), fldr)
+        self.DATA = PackageData(self.Folder + "/" + Ac.Name + "_DATA.txt")
+        self.CLArray = numpy.empty(
+            shape=(
+                self.DATA.AoAMax - self.DATA.AoAmin + 1,
+                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
+                self.DATA.ElevFD - self.DATA.ElevFU + 1,
+            ),
+            dtype=float,
+        )
+        self.CDArray = numpy.empty(
+            shape=(
+                self.DATA.AoAMax - self.DATA.AoAmin + 1,
+                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
+                self.DATA.ElevFD - self.DATA.ElevFU + 1,
+            ),
+            dtype=float,
+        )
+        self.CMArray = numpy.empty(
+            shape=(
+                self.DATA.AoAMax - self.DATA.AoAmin + 1,
+                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
+                self.DATA.ElevFD - self.DATA.ElevFU + 1,
+            ),
+            dtype=float,
+        )
+        self.NPArray = numpy.empty(
+            shape=(
+                self.DATA.AoAMax - self.DATA.AoAmin + 1,
+                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
+                self.DATA.ElevFD - self.DATA.ElevFU + 1,
+            ),
+            dtype=float,
+        )
+        self.TrimArray = numpy.empty(
+            shape=(round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1)), dtype=float
+        )
         cur_dir = os.getcwd()
-        folder_path = os.path.join(cur_dir,fldr)
+        folder_path = os.path.join(cur_dir, fldr)
         if os.path.exists(folder_path):
             print("Session created, folder exists")
         else:
             try:
                 os.mkdir(folder_path)
                 print("Session created, folder made")
-            except:    
+            except:
                 print("Session creation failed, folder not made")
                 time.sleep(10)
-                
-        initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
 
-        for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-            self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-        
+        initSizing(avl, Ac, self.Folder + "/" + Ac.Name + "_AC.txt", 20)
+
+        for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
+            self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+
         self.iteration = 0
 
-    
-    def ChangeFolder(self,fldr:str):
-        self.Folder = fldr
-        self.AVLrt.setAVLFileName(fldr+self.AVLrt.readAVLFileName())
-        self.AVLrt.setMassFileName(fldr+self.AVLrt.readMassFileName())
-    
-    def CreateFiles(self,name:str):
-        self.AVLrt.setAVLFileName(self.Folder+"/"+name+".avl")
-        self.AVLrt.setMassFileName(self.Folder+"/"+name+".mass")
-        Acft.WriteACtoFile(self.ACFT,self.AVLrt,20,self.Mach)
-        
-    def runSession(self,Alpha,Flap,Elev,resP:str):
-        self.AVLrt.reStartAVL()
+    def ChangeFolder(self, fldr: str):
+        self.Folder = os.path.join(os.getcwd(), fldr)
+        self.AVLrt.setAVLFileName(fldr + self.AVLrt.readAVLFileName())
+        self.AVLrt.setMassFileName(fldr + self.AVLrt.readMassFileName())
+
+    def CreateFiles(self, name: str):
+        self.AVLrt.setAVLFileName(self.Folder + "/" + name + ".avl")
+        self.AVLrt.setMassFileName(self.Folder + "/" + name + ".mass")
+        Acft.WriteACtoFile(self.ACFT, self.AVLrt, 20, self.Mach)
+
+    def runSession(self, Alpha, Flap, Elev, resP: str):
         setupAVL(self.AVLrt)
-        operAVL(self.AVLrt,Alpha,Flap,Elev,self.Folder+"/"+resP)
-    
-    def readResult(self,Alpha,Flap,Elev,resP:str):
+        retval = operAVL(self.AVLrt, Alpha, Flap, Elev, self.Folder + "/" + resP)
+        if retval:
+            self.readResult(Alpha, Flap, Elev, resP)
+        self.AVLrt.reStartAVL()
+
+    def readResult(self, Alpha, Flap, Elev, resP: str):
         try:
-            resFile = open(self.Folder+"/"+resP,"r")
+            resFile = open(self.Folder + "/" + resP)
             resLines = resFile.readlines()
-        except:
-            print("file not found - a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+        except FileNotFoundError:
+            # print("file not found - a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
             time.sleep(2)
             return 1
-            
+
         for line in resLines:
             line = line.strip()
-            line = line.split('  ')
-            k:list[str] = []
+            line = line.split("  ")
+            k: list[str] = []
             for word in line:
                 word = word.strip()
-                word = word.strip('=')
+                word = word.strip("=")
                 word = word.strip()
-                if (word != '=') and (word != ''):
-                    words = word.split('=')
+                if (word != "=") and (word != ""):
+                    words = word.split("=")
                     k = k + words
-            if k!=[]:
+            if k != []:
                 line = k
             line = [word.strip() for word in line]
             l = len(line)
             if line[0] == "CLtot":
-                self.CLArray[Alpha-self.DATA.AoAmin,round(Flap/2),self.DATA.ElevFD-Elev] = float(line[1])
-                print("CLtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+                self.CLArray[
+                    Alpha - self.DATA.AoAmin, round(Flap / 2), self.DATA.ElevFD - Elev
+                ] = float(line[1])
+                print(
+                    "CLtot Read"
+                    + " a:"
+                    + str(Alpha)
+                    + " F:"
+                    + str(Flap)
+                    + " e:"
+                    + str(Elev)
+                )
             if line[0] == "CDtot":
-                self.CDArray[Alpha-self.DATA.AoAmin,round(Flap/2),self.DATA.ElevFD-Elev] = float(line[1])
-                print("CDtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+                self.CDArray[
+                    Alpha - self.DATA.AoAmin, round(Flap / 2), self.DATA.ElevFD - Elev
+                ] = float(line[1])
+                print(
+                    "CDtot Read"
+                    + " a:"
+                    + str(Alpha)
+                    + " F:"
+                    + str(Flap)
+                    + " e:"
+                    + str(Elev)
+                )
             if l > 2:
                 if line[2] == "Cmtot":
-                    self.CMArray[Alpha-self.DATA.AoAmin,round(Flap/2),self.DATA.ElevFD-Elev] = float(line[3])
-                    print("Cmtot Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+                    self.CMArray[
+                        Alpha - self.DATA.AoAmin,
+                        round(Flap / 2),
+                        self.DATA.ElevFD - Elev,
+                    ] = float(line[3])
+                    print(
+                        "Cmtot Read"
+                        + " a:"
+                        + str(Alpha)
+                        + " F:"
+                        + str(Flap)
+                        + " e:"
+                        + str(Elev)
+                    )
                 if line[1] == "Xnp":
-                    self.NPArray[Alpha-self.DATA.AoAmin,round(Flap/2),self.DATA.ElevFD-Elev] = float(line[2])
-                    print("XNP Read"+" a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
+                    self.NPArray[
+                        Alpha - self.DATA.AoAmin,
+                        round(Flap / 2),
+                        self.DATA.ElevFD - Elev,
+                    ] = float(line[2])
+                    print(
+                        "XNP Read"
+                        + " a:"
+                        + str(Alpha)
+                        + " F:"
+                        + str(Flap)
+                        + " e:"
+                        + str(Elev)
+                    )
         return 0
-        
-        
-    def writeSTABMessage(self,message:list[str]):
-        file = open(self.Folder+"/Output/STABData-"+self.ACFT.Name,'a')
-        
+
+    def writeSTABMessage(self, message: list[str]):
+        file = open(self.Folder + "/Output/STABData-" + self.ACFT.Name, "a")
+
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : "+str(self.iteration)+" / STAB\n")
+        file.write("  iteration : " + str(self.iteration) + " / STAB\n")
         file.write("----------------------------------------------------\n")
 
         file.writelines(message)
-        
-        file.close()        
 
-    def writeTOData(self):
-        file = open(self.Folder+"/Output/TOData-"+self.ACFT.Name,'a')
-        
-        file.write("----------------------------------------------------\n")
-        file.write("  iteration : "+str(self.iteration)+" / TO\n")
-        file.write("----------------------------------------------------\n")
-
-        lines:list[str] = []
-        lines = ["TO Flap : "+str(self.DATA.TOFlap)]
-        lines = ["VsTO : "+str(self.DATA.VsTO)+"m/s\n"]
-        lines = lines + ["V2 : "+str(self.DATA.V2)+"m/s\n"]
-        lines = lines + ["TODR : "+str(self.DATA.TODR)+"m\n"]
-        
-        file.writelines(lines)
-        
         file.close()
 
+    def writeTOData(self):
+        file = open(self.Folder + "/Output/TOData-" + self.ACFT.Name, "a")
 
-    def writeTOMessage(self,message:list[str]):
-        file = open(self.Folder+"/Output/TOData-"+self.ACFT.Name,'a')
-        
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : "+str(self.iteration)+" / TO\n")
+        file.write("  iteration : " + str(self.iteration) + " / TO\n")
+        file.write("----------------------------------------------------\n")
+
+        lines: list[str] = []
+        lines = ["TO Flap : " + str(self.DATA.TOFlap)]
+        lines = ["VsTO : " + str(self.DATA.VsTO) + "m/s\n"]
+        lines = lines + ["V2 : " + str(self.DATA.V2) + "m/s\n"]
+        lines = lines + ["TODR : " + str(self.DATA.TODR) + "m\n"]
+
+        file.writelines(lines)
+
+        file.close()
+
+    def writeTOMessage(self, message: list[str]):
+        file = open(self.Folder + "/Output/TOData-" + self.ACFT.Name, "a")
+
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : " + str(self.iteration) + " / TO\n")
         file.write("----------------------------------------------------\n")
 
         file.writelines(message)
-        
+
         file.close()
 
     def writeCLBData(self):
-        file = open(self.Folder+"/Output/CLBData-"+self.ACFT.Name,'a')
-        
+        file = open(self.Folder + "/Output/CLBData-" + self.ACFT.Name, "a")
+
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : "+str(self.iteration)+" / CLB\n")
+        file.write("  iteration : " + str(self.iteration) + " / CLB\n")
         file.write("----------------------------------------------------\n")
 
-        lines:list[str] = []
-        lines = ["CLB Rate : "+str(self.DATA.CLBRate)+"m/s\n"]
-        lines = lines + ["CLB Angle : "+""]
-        lines = lines + ["CLB AoA : "+str(self.DATA.CLBAoA)+"\n"]
-        
+        lines: list[str] = []
+        lines = ["CLB Rate : " + str(self.DATA.CLBRate) + "m/s\n"]
+        lines = lines + ["CLB Angle : " + ""]
+        lines = lines + ["CLB AoA : " + str(self.DATA.CLBAoA) + "\n"]
+
         file.writelines(lines)
-        
+
         file.close
 
-    def writeCLBMessage(self,message:list[str]):
-        file = open(self.Folder+"/Output/CLBData-"+self.ACFT.Name,'a')
-        
+    def writeCLBMessage(self, message: list[str]):
+        file = open(self.Folder + "/Output/CLBData-" + self.ACFT.Name, "a")
+
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : "+str(self.iteration)+" / CLB\n")
+        file.write("  iteration : " + str(self.iteration) + " / CLB\n")
         file.write("----------------------------------------------------\n")
 
         file.writelines(message)
-        
+
         file.close()
 
-        
     def AeroAnalysis(self):
-        
-        Hung:list[str] = []
+        Hung: list[str] = []
 
         self.CreateFiles(self.ACFT.Name)
 
-        for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-            while 1:
-                self.CreateFiles(self.ACFT.Name)
-                res:str = self.ACFT.Name+"-aero_stab_f"+str(f)
-                self.runSession(0,f,0,res)
-                time.sleep(3)
-                i = 0
-                while 1:
-                    if self.readResult(0,f,0,res) == 0:
-                        break
-                    else:
-                        if i>5:
-                            print("file read abort - aero_stab_f"+str(f))
-                            break
-                        else:
-                            time.sleep(2)
-                            i += 1
-                if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
-                    resizeAC(self.ACFT,24)
-                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
-                    resizeAC(self.ACFT,25)
-                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.025:
-                    resizeAC(self.ACFT,14)
-                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.025:
-                    resizeAC(self.ACFT,15)
-                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif i<=5 :
-                    for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
-                        for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                            res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
-                            self.runSession(a,f,e,res)
-                            time.sleep(0.5)    
-                        time.sleep(5)
-                    time.sleep(5)
-                    break
-                time.sleep(3)
-            time.sleep(10)
-
-            for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
-                for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
-                    res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
-                    i = 0
-                    while 1:
-                        if self.readResult(a,f,e,res) == 0:
-                            break
-                        else:
-                            if i>5:
-                                print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[round(f/2)]))
-                                Hung.append([a,f,e])
-                                break
-                            else:
-                                time.sleep(1.5)
-                                i += 1
-        while 1:
-            V = Hung.pop()
-            a = V[0]; f = V[1]; e = V[2]
-            res:str = self.ACFT.Name+"-Aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
-
-            self.ACFT.HStab.Ainc=self.TrimArray[round(f/2)]
+        for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
+            res: str = self.ACFT.Name + "-aero_stab_f" + str(f)
             self.CreateFiles(self.ACFT.Name)
-            self.runSession(a,f,e,res)
+            self.runSession(0, f, 0, res)
+            if (
+                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
+                < -0.1
+            ):
+                resizeAC(self.ACFT, 24)
+                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+            elif (
+                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
+                > 0.1
+            ):
+                resizeAC(self.ACFT, 25)
+                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+            elif (
+                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
+                < -0.025
+            ):
+                resizeAC(self.ACFT, 14)
+                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+            elif (
+                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
+                > 0.025
+            ):
+                resizeAC(self.ACFT, 15)
+                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+            else:
+                for a in range(self.DATA.AoAmin, self.DATA.AoAMax + 1, 1):
+                    for e in range(self.DATA.ElevFD, self.DATA.ElevFU - 1, -1):
+                        res: str = (
+                            self.ACFT.Name
+                            + "-aero_a"
+                            + str(a)
+                            + "_f"
+                            + str(f)
+                            + "_e"
+                            + str(e)
+                            + "_t"
+                            + str(self.TrimArray[round(f / 2)])
+                        )
+                        self.runSession(a, f, e, res)
 
-            i = 0
-            while 1:
-                if self.readResult(a,f,e,res) == 0:
-                    break
-                else:
-                    if i>5:
-                        print("file read abort - a:"+str(a)+" F:"+str(f)+" e:"+str(e)+"_t"+str(self.TrimArray[round(f/2)]))
-                        Hung.append([a,f,e])
-                        break
-                    else:
-                        time.sleep(1.5)
-                        i += 1
-            if Hung == []:
-                print("Hung File Stack Empty")
-                break
-        
-        self.iteration += 1                                
-    
     def CGAnalysis(self):
         STABFolder = self.Folder + "/Output"
         if os.path.exists(STABFolder):
@@ -482,29 +526,86 @@ class Session:
             try:
                 os.mkdir(STABFolder)
                 print("STABDATA folder made")
-            except:    
+            except:
                 print("STABDATA folder creation failed")
 
-        for a in range(self.DATA.AoAmin,3+1,1):
-            for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-3]>0.1:
-                    msg = ["CG Too Far Back\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
+        for a in range(self.DATA.AoAmin, 3 + 1, 1):
+            for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
+                if (
+                    self.CMArray[
+                        a - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 3
+                    ]
+                    > 0.1
+                ):
+                    msg = (
+                        ["CG Too Far Back\n"]
+                        + ["Alpha : " + str(a) + ", Flaps : " + str(f) + "\n"]
+                        + [
+                            "Cm = "
+                            + str(
+                                self.CMArray[
+                                    a - self.DATA.AoAmin,
+                                    round(f / 2),
+                                    self.DATA.ElevFD - 0,
+                                ]
+                            )
+                            + "\n"
+                        ]
+                    )
                     print(msg)
                     self.writeSTABMessage(msg)
 
                     return 5
-                
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-5)]<-0.1:
-                    msg = ["CG Too Far Forward\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-(-5)])+"\n"]
+
+                if (
+                    self.CMArray[
+                        a - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - (-5)
+                    ]
+                    < -0.1
+                ):
+                    msg = (
+                        ["CG Too Far Forward\n"]
+                        + ["Alpha : " + str(a) + ", Flaps : " + str(f) + "\n"]
+                        + [
+                            "Cm = "
+                            + str(
+                                self.CMArray[
+                                    a - self.DATA.AoAmin,
+                                    round(f / 2),
+                                    self.DATA.ElevFD - (-5),
+                                ]
+                            )
+                            + "\n"
+                        ]
+                    )
                     print(msg)
                     self.writeSTABMessage(msg)
-                    
+
                     return 4
-                
-        for a in range(4,self.DATA.AoAMax+1,1):
-            for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
-                if self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0:
-                    msg = ["CG Too Far Back\n"]+["Alpha : "+str(a)+", Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[a-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
+
+        for a in range(4, self.DATA.AoAMax + 1, 1):
+            for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
+                if (
+                    self.CMArray[
+                        a - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0
+                    ]
+                    > 0
+                ):
+                    msg = (
+                        ["CG Too Far Back\n"]
+                        + ["Alpha : " + str(a) + ", Flaps : " + str(f) + "\n"]
+                        + [
+                            "Cm = "
+                            + str(
+                                self.CMArray[
+                                    a - self.DATA.AoAmin,
+                                    round(f / 2),
+                                    self.DATA.ElevFD - 0,
+                                ]
+                            )
+                            + "\n"
+                        ]
+                    )
                     print(msg)
                     self.writeSTABMessage(msg)
 
@@ -513,62 +614,65 @@ class Session:
         self.writeSTABMessage("CG in Range\n")
         return 0
 
-        
-        
-
     def TOAnalysis(self):
         self.Mach = 0.212
         self.rho = self.rhoSet[0]
-        
-        Friction = self.ACFT.Mass*0.01*gAcc
-        
-        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
-        Sref = Cref*self.ACFT.Wing.SpanHalf*2
+
+        Friction = self.ACFT.Mass * 0.01 * gAcc
+
+        Cref = (self.ACFT.Wing.RootChord + self.ACFT.Wing.TipChord) / 2
+        Sref = Cref * self.ACFT.Wing.SpanHalf * 2
 
         f = 6
-        #TO Speed Determination
-        a = 12    
-        CLv2 = self.CLArray[a-self.DATA.AoAmin,round(f/2),0]
-        Lvsc = 0.5*CLv2*self.rho*Sref
-            
-        self.DATA.VsTO=numpy.sqrt(self.ACFT.Mass/Lvsc)
-        self.DATA.V2 = 1.2*self.DATA.VsTO
-        
-        Lv2 = 0.5*CLv2*(self.DATA.V2**2)*self.rho*Sref
+        # TO Speed Determination
+        a = 12
+        CLv2 = self.CLArray[a - self.DATA.AoAmin, round(f / 2), 0]
+        Lvsc = 0.5 * CLv2 * self.rho * Sref
 
-        #TO Run Analysis
-        CL = self.CLArray[0,round(f/2),0]
-        CD = self.CDArray[0,round(f/2),0]
+        self.DATA.VsTO = numpy.sqrt(self.ACFT.Mass / Lvsc)
+        self.DATA.V2 = 1.2 * self.DATA.VsTO
+
+        Lv2 = 0.5 * CLv2 * (self.DATA.V2**2) * self.rho * Sref
+
+        # TO Run Analysis
+        CL = self.CLArray[0, round(f / 2), 0]
+        CD = self.CDArray[0, round(f / 2), 0]
         v = 0
         t = 0
         d = 0
         while 1:
-            Drag = 0.5*CD*(v**2)*self.rho*Sref
+            Drag = 0.5 * CD * (v**2) * self.rho * Sref
             F = self.DATA.MaxThrust - (Friction + Drag)
-            v = v + F/self.ACFT.Mass
+            v = v + F / self.ACFT.Mass
             t = t + 1
             d = d + v
             if v > self.DATA.V2:
-                if d<762:
+                if d < 762:
                     self.DATA.TODR = d
                     break
                 else:
-                    msg = ["TODR > TODA(762m)(marginal)\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]+["TODR = "+str(d)+"\n"]
+                    msg = (
+                        ["TODR > TODA(762m)(marginal)\n"]
+                        + ["Alpha : " + 0 + ", Flaps : " + str(f) + "\n"]
+                        + ["TODR = " + str(d) + "\n"]
+                    )
                     print(msg)
                     self.writeTOMessage(msg)
 
                     return 1
-            elif d>762:
-                msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]
+            elif d > 762:
+                msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"] + [
+                    "Alpha : " + 0 + ", Flaps : " + str(f) + "\n"
+                ]
                 print(msg)
                 self.writeTOMessage(msg)
 
                 return 6
-                    
-            
-        #TO Energy Analysis            
-        self.DATA.ReqEnergy[0] = self.DATA.MaxThrust*self.DATA.TODR/self.DATA.ThrustEfficiency/3600
-        
+
+        # TO Energy Analysis
+        self.DATA.ReqEnergy[0] = (
+            self.DATA.MaxThrust * self.DATA.TODR / self.DATA.ThrustEfficiency / 3600
+        )
 
         TOFolder = self.Folder + "/Output"
         if os.path.exists(TOFolder):
@@ -577,87 +681,99 @@ class Session:
             try:
                 os.mkdir(TOFolder)
                 print("TODATA folder made")
-            except:    
+            except:
                 print("TODATA folder creation failed")
 
         self.writeTOData()
         return 0
-            
 
     def CLBAnalysis(self):
         self.Mach = 0.42
-        self.VmpsT = 170/1.94384
+        self.VmpsT = 170 / 1.94384
         self.rho = self.rhoSet[3]
-        
-        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
-        Sref = Cref*self.ACFT.Wing.SpanHalf*2
-        
+
+        Cref = (self.ACFT.Wing.RootChord + self.ACFT.Wing.TipChord) / 2
+        Sref = Cref * self.ACFT.Wing.SpanHalf * 2
+
         Vclb = self.VmpsT
-        VVref = 900/196.85
+        VVref = 900 / 196.85
         VVclb = 0
         elev = 0
-        
+
         Thrust = 0
         Thrust1 = self.DATA.MaxThrust
-        Thrust2 = self.DATA.MaxPower*3600/Vclb
-        
-        if(Thrust1 < Thrust2):
+        Thrust2 = self.DATA.MaxPower * 3600 / Vclb
+
+        if Thrust1 < Thrust2:
             Thrust = Thrust1
         else:
             Thrust = Thrust2
-        
-        for a in range(10,-1,-1):
-            for e in range(4,-10,-1):
-                CL = self.CLArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
-                CD = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
-                CM = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-e]
-                
+
+        for a in range(10, -1, -1):
+            for e in range(4, -10, -1):
+                CL = self.CLArray[a - self.DATA.AoAmin, 0, self.DATA.ElevFD - e]
+                CD = self.CDArray[a - self.DATA.AoAmin, 0, self.DATA.ElevFD - e]
+                CM = self.CMArray[a - self.DATA.AoAmin, 0, self.DATA.ElevFD - e]
+
                 if e > -12:
-                    CMm1 = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e-1)]
+                    CMm1 = self.CMArray[
+                        a - self.DATA.AoAmin, 0, self.DATA.ElevFD - (e - 1)
+                    ]
                 else:
                     CMm1 = CM
                 if e < 5:
-                    CMp1 = self.CMArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-(e+1)]
+                    CMp1 = self.CMArray[
+                        a - self.DATA.AoAmin, 0, self.DATA.ElevFD - (e + 1)
+                    ]
                 else:
                     CMp1 = CM
-                    
+
                 if (CMm1 > 0) and (CMp1 < 0):
                     elev = e
-                    L = 0.5*CL*(Vclb**2)*self.rho*Sref
-                
+                    L = 0.5 * CL * (Vclb**2) * self.rho * Sref
+
                     if L > self.ACFT.Mass:
-                        VVclb2 = Vclb*numpy.sin(numpy.arccos(self.ACFT.Mass/L))
-                        VVangle = numpy.arccos(self.ACFT.Mass/L)
+                        VVclb2 = Vclb * numpy.sin(numpy.arccos(self.ACFT.Mass / L))
+                        VVangle = numpy.arccos(self.ACFT.Mass / L)
 
                         if VVclb2 > VVclb:
                             VVclb = VVclb2
                             if VVclb >= VVref:
-                                Drag = 0.5*CD*(Vclb**2)*self.rho*Sref
-                            
+                                Drag = 0.5 * CD * (Vclb**2) * self.rho * Sref
+
                                 if Thrust > Drag:
                                     self.DATA.CLBAoA = a
                                     self.DATA.CLBAngle = VVangle
                                     self.DATA.CLBRate = VVclb
-        
-        CD0 = self.CDArray[self.DATA.CLBAoA-self.DATA.AoAmin,0,self.DATA.ElevFD-elev]
-        Drag = 0.5*CD0*(Vclb**2)*self.rho*Sref
+
+        CD0 = self.CDArray[
+            self.DATA.CLBAoA - self.DATA.AoAmin, 0, self.DATA.ElevFD - elev
+        ]
+        Drag = 0.5 * CD0 * (Vclb**2) * self.rho * Sref
 
         if Drag > Thrust:
-            msg = ["Thrust insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["Max Thrust : "+str(Thrust)+",  Drag : "+str(Drag)+"\n"]
+            msg = (
+                ["Thrust insufficient\n"]
+                + ["Alpha : " + str(self.DATA.CLBAoA) + "\n"]
+                + ["Max Thrust : " + str(Thrust) + ",  Drag : " + str(Drag) + "\n"]
+            )
             print(msg)
             self.writeCLBMessage(msg)
 
             return 6
-                        
+
         elif VVclb < VVref:
-            msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"]
+            msg = (
+                ["Climbrate insufficient\n"]
+                + ["Alpha : " + str(self.DATA.CLBAoA) + "\n"]
+                + ["VV Req : " + str(VVref) + ",  VV Act : " + str(VVclb) + "\n"]
+            )
 
             return 1
-        
+
         else:
             CLBFolder = self.Folder + "/Output"
             self.DATA.CLBRate = VVclb
-
 
             if os.path.exists(CLBFolder):
                 print("CLBDATA folder exists")
@@ -665,43 +781,40 @@ class Session:
                 try:
                     os.mkdir(CLBFolder)
                     print("CLBDATA folder made")
-                except:    
+                except:
                     print("CLBDATA folder creation failed")
             self.writeCLBData()
             return 0
-    
 
     def CRZAnalysis(self):
         self.Mach = 0.42
-        self.VmpsT = 245/1.94384
+        self.VmpsT = 245 / 1.94384
         self.rho = self.rhoSet[3]
 
         return 0
-    
+
     def DESAnalysis(self):
         self.Mach = 0.42
-        self.VmpsT = 245/1.94384
+        self.VmpsT = 245 / 1.94384
         self.rho = self.rhoSet[1]
 
         return 0
 
-    
-    
-    
-def LDGAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    LDGSession = Session(0.42,135,0)
-    
-    Friction = ACFT.Mass*0.01*gAcc
-    
-    for i in range(0,20):
-        0 #tbd
-    
-    AVLrt.reStartAVL()
-    operAVL(AVLrt,resPath)
 
+def LDGAnalysis(ACFT: Acft.Aircraft, AVLrt: AVLF.runtime, resPath: str):
+    LDGSession = Session(0.42, 135, 0)
 
-def TaxiAnalysis(ACFT:Acft.Aircraft,AVLrt:AVLF.runtime,resPath:str):
-    Friction = ACFT.Mass*0.01*gAcc
+    Friction = ACFT.Mass * 0.01 * gAcc
+
+    for i in range(0, 20):
+        0  # tbd
 
     AVLrt.reStartAVL()
-    operAVL(AVLrt,resPath)
+    operAVL(AVLrt, resPath)
+
+
+def TaxiAnalysis(ACFT: Acft.Aircraft, AVLrt: AVLF.runtime, resPath: str):
+    Friction = ACFT.Mass * 0.01 * gAcc
+
+    AVLrt.reStartAVL()
+    operAVL(AVLrt, resPath)
