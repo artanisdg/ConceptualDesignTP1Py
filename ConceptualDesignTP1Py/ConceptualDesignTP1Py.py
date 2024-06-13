@@ -31,37 +31,37 @@ while 1:
 
     STAB = TestSession.CGAnalysis()
     if STAB != 0:
-        MainF.resizeAC(TestAC,STAB)
+        TestSession.resizeAC(STAB)
 
     if STAB == 0:
         TO = TestSession.TOAnalysis()
 
         if TO != 0:
-            MainF.resizeAC(TestAC,TO)
+            TestSession.resizeAC(TO)
             
         if TO == 0:
             CLB = TestSession.CLBAnalysis()
 
             if CLB != 0:
-                MainF.resizeAC(TestAC,CLB)
+                TestSession.resizeAC(CLB)
             
             if CLB == 0:
                 CRZ = TestSession.CRZAnalysis()
                 
                 if CRZ != 0:
-                    MainF.resizeAC(TestAC,CRZ)
+                    TestSession.resizeAC(CRZ)
                     
                 if CRZ == 0:
                     DES = TestSession.DESAnalysis()
                     
                     if DES != 0:
-                        MainF.resizeAC(TestAC,DES)
+                        TestSession.resizeAC(DES)
                     
                     if DES == 0:
                         LDG = TestSession.LDGAnalysis()
                         
                         if LDG != 0:
-                            MainF.resizeAC(TestAC,LDG)
+                            TestSession.resizeAC(LDG)
                             
                         if LDG == 0:
                             Taxi = TestSession.TaxiAnalysis()

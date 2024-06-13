@@ -41,51 +41,6 @@ def setBattery(ACFT:Acft.Aircraft,DensityWhkg,kWhReq,WingBatteryRatio:float):
     ACFT.Battery.CoM.F[1] = ACFT.Fuselage.CoM[1]
     ACFT.Battery.CoM.F[2] = ACFT.Fuselage.CoM[2]
     print("Battery Calculation Complete")
-
-
-def resizeAC(ACFT:Acft.Aircraft,option:int):
-    if   option == 1: #CL too low
-        ACFT.Wing.SpanHalf = ACFT.Wing.SpanHalf * 1.05
-        ACFT.Wing.Mass = ACFT.Wing.Mass * 1.08
-    #elif option == 99: #CL excessive
-    #    0#tbd
-    elif option == 2: #HStab too small
-        ACFT.HStab.SpanHalf = ACFT.HStab.SpanHalf * 1.05
-        ACFT.HStab.RootChord = ACFT.HStab.RootChord * 1.05
-        ACFT.HStab.TipChord = ACFT.HStab.TipChord * 1.05
-        ACFT.HStab.Mass = ACFT.HStab.Mass * (1.05**2)
-        ACFT.HStab.CoM[0] = ACFT.HStab.CoM[0] * 1.05
-    elif option == 3: #VStab too small
-        ACFT.VStab.Span = ACFT.VStab.Span * 1.05
-        ACFT.VStab.RootChord = ACFT.VStab.Span * 1.05
-        ACFT.VStab.TipChord = ACFT.VStab.Span * 1.05
-        ACFT.VStab.Mass = ACFT.VStab.Mass * (1.05**2)
-        ACFT.VStab.CoM[0] = ACFT.VStab.CoM[0] * 1.05
-    elif option == 4: #CG too fwd, Shift Battery CoM
-        ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] + 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] + 0.10*0.5*(ACFT.Wing.RootChord+ACFT.Wing.TipChord)
-    elif option == 5: #CG too aft, Shift Battery CoM
-        ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] - 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] - 0.10*0.5*(ACFT.Wing.RootChord+ACFT.Wing.TipChord)
-    elif option == 6: #Thrust insufficient
-        0
-    elif option == 11: #CL too low - increase chord
-        ACFT.Wing.RootChord = ACFT.Wing.RootChord * 1.05
-        ACFT.Wing.Mass = ACFT.Wing.Mass * 1.05 + ACFT.Wing.BattMass
-    elif option == 12: #HStab ineffective -> Move Further Back
-        ACFT.HStab.AttachPos[0] = ACFT.HStab.AttachPos[0] + 0.3
-    elif option == 14: #trim too down, trim up
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.25
-    elif option == 15: #trim too up, trim down
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.25
-    elif option == 24: #trim too down, trim up a lot
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.5
-    elif option == 25: #trim too up, trim down a lot
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.5
-    else:
-        print("resizeAC Function Call Error")
-        
-    ACFT.CalcCoM()
     
 
 def setupAVL(RTime:AVLF.runtime):
@@ -366,7 +321,92 @@ class Session:
         file.writelines(lines)
         
         file.close
-        
+    
+
+    def resizeAC(self,option:int):
+        if   option == 1: #CL too low
+            msg = ["CL Too Low\n"]+["Wing Span * 1.05\n"]
+            self.ACFT.Wing.SpanHalf = self.ACFT.Wing.SpanHalf * 1.05
+            self.ACFT.Wing.Mass = self.ACFT.Wing.Mass * 1.08
+            msg = msg + ["Span : "]+str(self.ACFT.Wing.SpanHalf)+["  Mass : "]+str(self.ACFT.Wing.Mass)+["\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+
+        #elif option == 99: #CL excessive
+        #    0#tbd
+        elif option == 2: #HStab too small
+            msg = ["HStab too small\n"]+["HStab Geom * 1.05\n"]
+            self.ACFT.HStab.SpanHalf = self.ACFT.HStab.SpanHalf * 1.05
+            self.ACFT.HStab.RootChord = self.ACFT.HStab.RootChord * 1.05
+            self.ACFT.HStab.TipChord = self.ACFT.HStab.TipChord * 1.05
+            self.ACFT.HStab.Mass = self.ACFT.HStab.Mass * (1.05**2)
+            self.ACFT.HStab.CoM[0] = self.ACFT.HStab.CoM[0] * 1.05
+            msg = msg + ["HStab Span : "]+str(self.ACFT.HStab.SpanHalf)+["  Mass : "]+str(self.ACFT.HStab.Mass)+["\n"]
+            msg = msg + ["HStab Root Chord : "]+str(self.ACFT.HStab.RootChord)+["  Tip Chord : "]+str(self.ACFT.HStab.TipChord)+["\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+
+        elif option == 3: #VStab too small
+            self.ACFT.VStab.Span = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.RootChord = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.TipChord = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.Mass = self.ACFT.VStab.Mass * (1.05**2)
+            self.ACFT.VStab.CoM[0] = self.ACFT.VStab.CoM[0] * 1.05
+
+        elif option == 4: #CG too fwd, Shift Battery CoM
+            self.ACFT.Battery.CoM.F[0] = self.ACFT.Battery.CoM.F[0] + 0.5
+            self.ACFT.Fuselage.CoM[0] = self.ACFT.Fuselage.CoM[0] + 0.10*0.5*(self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)
+
+        elif option == 5: #CG too aft, Shift Battery CoM
+            self.ACFT.Battery.CoM.F[0] = self.ACFT.Battery.CoM.F[0] - 0.5
+            self.ACFT.Fuselage.CoM[0] = self.ACFT.Fuselage.CoM[0] - 0.10*0.5*(self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)
+
+        elif option == 6: #Thrust insufficient
+            0
+
+        elif option == 11: #CL too low - increase chord
+            self.ACFT.Wing.RootChord = self.ACFT.Wing.RootChord * 1.05
+            self.ACFT.Wing.Mass = self.ACFT.Wing.Mass * 1.05 + self.ACFT.Wing.BattMass
+
+        elif option == 12: #HStab ineffective -> Move Further Back
+            self.ACFT.HStab.AttachPos[0] = self.ACFT.HStab.AttachPos[0] + 0.3
+
+        elif option == 14: #trim too down, trim up
+            msg = ["Trim too down\n"]+["HStab Trim -0.1deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.1
+            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 15: #trim too up, trim down
+            msg = ["Trim too up\n"]+["HStab Trim +0.1deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.1
+            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 24: #trim too down, trim up a lot
+            msg = ["Trim too down\n"]+["HStab Trim -0.5deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.5
+            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 25: #trim too up, trim down a lot
+            msg = ["Trim too up\n"]+["HStab Trim +0.5deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.5
+            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            print(msg)
+            self.writeLogMessage(msg)
+
+        else:
+            self.print("resizeAC Function Call Error")
+            self.writeLogMessage("resizeAC Function Call Error")
+            
+        self.ACFT.CalcCoM()
+
         
     def AeroAnalysis(self):
         
@@ -394,16 +434,16 @@ class Session:
                             time.sleep(1)
                             i += 1
                 if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
-                    resizeAC(self.ACFT,24)
+                    self.resizeAC(self.ACFT,24)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
-                    resizeAC(self.ACFT,25)
+                    self.resizeAC(self.ACFT,25)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.025:
-                    resizeAC(self.ACFT,14)
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.01:
+                    self.resizeAC(self.ACFT,14)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
-                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.025:
-                    resizeAC(self.ACFT,15)
+                elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.01:
+                    self.resizeAC(self.ACFT,15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
                     
