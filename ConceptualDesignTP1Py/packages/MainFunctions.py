@@ -434,16 +434,16 @@ class Session:
                             time.sleep(1)
                             i += 1
                 if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
-                    self.resizeAC(self.ACFT,24)
+                    self.resizeAC(24)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
-                    self.resizeAC(self.ACFT,25)
+                    self.resizeAC(25)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.01:
-                    self.resizeAC(self.ACFT,14)
+                    self.resizeAC(14)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.01:
-                    self.resizeAC(self.ACFT,15)
+                    self.resizeAC(15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
                     
