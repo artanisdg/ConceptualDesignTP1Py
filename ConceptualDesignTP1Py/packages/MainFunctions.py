@@ -325,10 +325,10 @@ class Session:
 
     def resizeAC(self,option:int):
         if   option == 1: #CL too low
-            msg = ["CL Too Low\n"]+["Wing Span * 1.05\n"]
+            msg = ["CL Too Low\n"+"Wing Span * 1.05\n"]
             self.ACFT.Wing.SpanHalf = self.ACFT.Wing.SpanHalf * 1.05
             self.ACFT.Wing.Mass = self.ACFT.Wing.Mass * 1.08
-            msg = msg + ["Span : "]+str(self.ACFT.Wing.SpanHalf)+["  Mass : "]+str(self.ACFT.Wing.Mass)+["\n"]
+            msg = msg + ["Span : "+str(self.ACFT.Wing.SpanHalf)+"  Mass : "+str(self.ACFT.Wing.Mass)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
@@ -336,14 +336,14 @@ class Session:
         #elif option == 99: #CL excessive
         #    0#tbd
         elif option == 2: #HStab too small
-            msg = ["HStab too small\n"]+["HStab Geom * 1.05\n"]
+            msg = ["HStab too small\n"+"HStab Geom * 1.05\n"]
             self.ACFT.HStab.SpanHalf = self.ACFT.HStab.SpanHalf * 1.05
             self.ACFT.HStab.RootChord = self.ACFT.HStab.RootChord * 1.05
             self.ACFT.HStab.TipChord = self.ACFT.HStab.TipChord * 1.05
             self.ACFT.HStab.Mass = self.ACFT.HStab.Mass * (1.05**2)
             self.ACFT.HStab.CoM[0] = self.ACFT.HStab.CoM[0] * 1.05
-            msg = msg + ["HStab Span : "]+str(self.ACFT.HStab.SpanHalf)+["  Mass : "]+str(self.ACFT.HStab.Mass)+["\n"]
-            msg = msg + ["HStab Root Chord : "]+str(self.ACFT.HStab.RootChord)+["  Tip Chord : "]+str(self.ACFT.HStab.TipChord)+["\n"]
+            msg = msg + ["HStab Span : "+str(self.ACFT.HStab.SpanHalf)+"  Mass : "+str(self.ACFT.HStab.Mass)+"\n"]
+            msg = msg + ["HStab Root Chord : "+str(self.ACFT.HStab.RootChord)+"  Tip Chord : "+str(self.ACFT.HStab.TipChord)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
@@ -374,30 +374,30 @@ class Session:
             self.ACFT.HStab.AttachPos[0] = self.ACFT.HStab.AttachPos[0] + 0.3
 
         elif option == 14: #trim too down, trim up
-            msg = ["Trim too down\n"]+["HStab Trim -0.1deg\n"]
+            msg = ["Trim too down\n"+"HStab Trim -0.1deg\n"]
             self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.1
-            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
         elif option == 15: #trim too up, trim down
-            msg = ["Trim too up\n"]+["HStab Trim +0.1deg\n"]
+            msg = ["Trim too up\n"+"HStab Trim +0.1deg\n"]
             self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.1
-            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
         elif option == 24: #trim too down, trim up a lot
-            msg = ["Trim too down\n"]+["HStab Trim -0.5deg\n"]
+            msg = ["Trim too down\n"+"HStab Trim -0.5deg\n"]
             self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.5
-            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
         elif option == 25: #trim too up, trim down a lot
-            msg = ["Trim too up\n"]+["HStab Trim +0.5deg\n"]
+            msg = ["Trim too up\n"+"HStab Trim +0.5deg\n"]
             self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.5
-            msg = msg + ["HStab Trim : "]+str(self.ACFT.HStab.Ainc)
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
