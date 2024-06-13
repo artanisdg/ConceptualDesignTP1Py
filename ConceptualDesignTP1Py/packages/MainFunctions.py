@@ -478,7 +478,7 @@ class Session:
                             print("file read abort - aero_stab_f"+str(f))
                             break
                         else:
-                            time.sleep(1)
+                            time.sleep(0.5)
                             i += 1
                 if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
                     self.resizeAC(24)
@@ -501,11 +501,11 @@ class Session:
                             res:str = self.ACFT.Name+"-aero_a"+str(a)+"_f"+str(f)+"_e"+str(e)+"_t"+str(self.TrimArray[round(f/2)])
                             self.runSession(a,f,e,res)
                             time.sleep(0.5)    
-                        time.sleep(5)
-                    time.sleep(5)
+                        time.sleep(3)
+                    time.sleep(3)
                     break
-                time.sleep(3)
-            time.sleep(10)
+                time.sleep(1)
+            time.sleep(5)
 
             for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
                 for e in range(self.DATA.ElevFD,self.DATA.ElevFU-1,-1):
