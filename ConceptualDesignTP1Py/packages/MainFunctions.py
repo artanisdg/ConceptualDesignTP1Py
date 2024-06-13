@@ -322,6 +322,42 @@ class Session:
         
         file.close
     
+    def writeCRZData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / CRZ\n")
+        file.write("----------------------------------------------------\n")
+
+        crzSpeed = 245/1.94384
+        crzDist = 926000-self.DATA.CLBDist
+        crzTime = crzDist/crzSpeed
+
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+
+        lines:list[str] = []
+        lines = ["CRZ Speed : 245kts\n"]
+        lines = lines + ["TO/CLB/CRZ Req Energy : "+str(self.DATA.ReqEnergy[0])+"/"+str(self.DATA.ReqEnergy[1])+"/"+str(self.DATA.ReqEnergy[2])+" (Wh)\n"]
+        lines = lines + ["Total Batt Energy : "+str(BattE)+"Wh\n"]
+        lines = lines + ["CRZ Time : "+str(round(crzTime))+"sec\n"]
+        lines = lines + ["CRZ Distance : "+str(crzDist/1852)+" nm\n"]
+
+        file.writelines(lines)
+        
+        file.close
+
+    def writeDESData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / DES\n")
+        file.write("----------------------------------------------------\n")
+
+        
+        #file.writelines(lines)
+        
+        file.close
 
     def resizeAC(self,option:int):
         if   option == 1: #CL too low
@@ -749,9 +785,12 @@ class Session:
         if Ereq > BattE:
             Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
             setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+BattE+"   (Battery Mass : "+BattMass+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
             return 1
 
-
+        self.writeCRZData()
         return 0
     
     def DESAnalysis(self):
@@ -759,6 +798,7 @@ class Session:
         self.VmpsT = 190/1.94384
         self.rho = self.rhoSet[1]
 
+        self.writeCRZData()
         return 0
     
     def LDGAnalysis(self):
@@ -766,6 +806,7 @@ class Session:
         self.VmpsT = 190/1.94384
         self.rho = self.rhoSet[0]
 
+        #self.writeLDGData()
         return 0
 
     def TaxiAnalysis(self):
@@ -783,6 +824,6 @@ class Session:
         Energy = Power*(Tout + Tin)
         
 
-        
+        #self.writeTaxiData()        
         return 0
         
