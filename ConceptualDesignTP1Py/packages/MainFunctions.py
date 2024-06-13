@@ -14,14 +14,8 @@ if 'darwin' in sys.platform:
 import packages.AVLFunctions as AVLF
 import packages.AVLAircraft as Acft
 
-def initSizing(avl:AVLF.runtime,ACFT:Acft.Aircraft,pth:string,res:int):
-    ACFT.ReadFromTxt(pth)
-    setBattery(ACFT,200,4000,0.66)
-    ACFT.CalcCoM()
-    Acft.WriteACtoFile(ACFT,avl,res,0.42)
-
-def setBattery(ACFT:Acft.Aircraft,DensityWhkg,kWhReq,WingBatteryRatio:float):
-    BattGW = kWhReq*1000/DensityWhkg
+def setBattery(ACFT:Acft.Aircraft,DensityWhkg,WhReq,WingBatteryRatio:float):
+    BattGW = WhReq/DensityWhkg
     BattWing = BattGW*WingBatteryRatio
     BattBody = BattGW*(1-WingBatteryRatio)
     ACFT.Battery.Mass.L = BattWing/2
@@ -214,13 +208,21 @@ class Session:
                 print("Session creation failed, folder not made")
                 time.sleep(10)
                 
-        initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
+        self.initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
 
         for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
             self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
         
         self.iteration = 0
 
+
+    def initSizing(self,pth:string,res:int):
+        self.ACFT.ReadFromTxt(pth)
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+        Ebat = Ereq
+        setBattery(self.ACFT,200,Ebat,0.66)
+        self.ACFT.CalcCoM()
+        Acft.WriteACtoFile(self.ACFT,self.AVLrt,res,0.42)
     
     def ChangeFolder(self,fldr:str):
         self.Folder = fldr
