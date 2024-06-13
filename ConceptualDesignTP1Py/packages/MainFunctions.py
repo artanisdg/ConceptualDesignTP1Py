@@ -416,6 +416,15 @@ class Session:
         
         AeroFolder = self.Folder + "/Output"
 
+        if os.path.exists(AeroFolder):
+            print("Output folder exists")
+        else:
+            try:
+                os.mkdir(AeroFolder)
+                print("Output folder made")
+            except:    
+                print("Output folder creation failed")
+
         for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
             while 1:
                 self.CreateFiles(self.ACFT.Name)
@@ -446,15 +455,6 @@ class Session:
                     self.resizeAC(15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
-                    
-                    if os.path.exists(AeroFolder):
-                        print("Output folder exists")
-                    else:
-                        try:
-                            os.mkdir(AeroFolder)
-                            print("Output folder made")
-                        except:    
-                            print("Output folder creation failed")
                     msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
                     print(msg)
                     self.writeLogMessage(msg)
