@@ -340,7 +340,7 @@ class Session:
 
         lines:list[str] = []
         lines = ["CRZ Speed : 245kts\n"]
-        lines = lines + ["TO/CLB/CRZ Req Energy : "+str(self.DATA.ReqEnergy[0])+"/"+str(self.DATA.ReqEnergy[1])+"/"+str(self.DATA.ReqEnergy[2])+" (Wh)\n"]
+        lines = lines + ["TO/CLB/CRZ Req Energy : "+str(round(self.DATA.ReqEnergy[0]))+"/"+str(round(self.DATA.ReqEnergy[1]))+"/"+str(round(self.DATA.ReqEnergy[2]))+" (Wh)\n"]
         lines = lines + ["Total Batt Energy : "+str(BattE)+"Wh\n"]
         lines = lines + ["CRZ Time : "+str(round(crzTime))+"sec\n"]
         lines = lines + ["CRZ Distance : "+str(crzDist/1852)+" nm\n"]
@@ -493,7 +493,7 @@ class Session:
                     self.resizeAC(15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
-                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
+                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+", Trim : "+self.ACFT.HStab.Ainc+"\n"]+["Savde Trim Value = "+self.TrimArray[round(f/2)]+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
                     print(msg)
                     self.writeLogMessage(msg)
                     for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
