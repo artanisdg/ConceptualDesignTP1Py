@@ -493,7 +493,7 @@ class Session:
                     self.resizeAC(15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
-                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+", Trim : "+self.ACFT.HStab.Ainc+"\n"]+["Savde Trim Value = "+self.TrimArray[round(f/2)]+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
+                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+", Trim : "+str(round(self.ACFT.HStab.Ainc,2))+"\n"]+["Savde Trim Value = "+str(round(self.TrimArray[round(f/2)],2))+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
                     print(msg)
                     self.writeLogMessage(msg)
                     for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
