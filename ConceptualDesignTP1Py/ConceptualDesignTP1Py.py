@@ -25,6 +25,8 @@ TestSession = MainF.Session(RTTest,TestAC,"TestRun")
 
 
 while 1:
+    
+    
     TestSession.AeroAnalysis()
 
     STAB = TestSession.CGAnalysis()
@@ -40,14 +42,36 @@ while 1:
         if TO == 0:
             CLB = TestSession.CLBAnalysis()
 
-            CRZ = TestSession.CRZAnalysis()
+            if CLB != 0:
+                MainF.resizeAC(TestAC,CLB)
+            
+            if CLB == 0:
+                CRZ = TestSession.CRZAnalysis()
+                
+                if CRZ != 0:
+                    MainF.resizeAC(TestAC,CRZ)
+                    
+                if CRZ == 0:
+                    DES = TestSession.DESAnalysis()
+                    
+                    if DES != 0:
+                        MainF.resizeAC(TestAC,DES)
+                    
+                    if DES == 0:
+                        LDG = TestSession.LDGAnalysis()
+                        
+                        if LDG != 0:
+                            MainF.resizeAC(TestAC,LDG)
+                            
+                        if LDG == 0:
+                            Taxi = TestSession.TaxiAnalysis()
+                            
+                            if Taxi != 0:
+                                0
+
+                            if Taxi == 0:
+                                break
+                    
 
 
 time.sleep(1000)
-    
-
-# MainF.CLBAnalysis()
-# MainF.CRZAnalysis()
-# MainF.DESAnalysis()
-# MainF.LDGAnalysis()
-# MainF.TaxiAnalysis()
