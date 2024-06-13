@@ -208,7 +208,7 @@ class Session:
                 print("Session creation failed, folder not made")
                 time.sleep(10)
                 
-        self.initSizing(avl,Ac,self.Folder+"/"+Ac.Name+"_AC.txt",20)
+        self.initSizing(self.Folder+"/"+Ac.Name+"_AC.txt",20)
 
         for f in range(self.DATA.Flapmin,self.DATA.FlapMax+1,2):
             self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
