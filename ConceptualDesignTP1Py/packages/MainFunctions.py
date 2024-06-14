@@ -787,7 +787,7 @@ class Session:
         if Ereq > BattE:
             Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
             setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
-            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+BattE+"   (Battery Mass : "+BattMass+")\n"]
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
             print(msg)
             self.writeLogMessage(msg)
             return 1
