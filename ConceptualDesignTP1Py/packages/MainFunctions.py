@@ -135,7 +135,7 @@ class PackageData:
         
 
     ReqEnergy:list[float] = numpy.empty(shape=(5),dtype=float) #in Wh
-    BattDensity:float = 0 #in Wh/kg
+    BattDensity:float = 200 #in Wh/kg
     MaxThrust:float = 0 #in N
     MaxPower:float = 0 #in W
     ThrustEfficiency:float = 0 #in floating point (Eprop * Emotor)
@@ -776,7 +776,7 @@ class Session:
         ClbTime = AltTgt/self.DATA.CLBRate
         
         Ep = self.ACFT.Mass * gAcc * AltTgt
-        Efric = Drag*Vclb*ClbTime
+        Efric = Drag*Vclb*ClbTime / self.DATA.ThrustEfficiency
         
         self.DATA.ReqEnergy[1] = (Ep + Efric)/3600
         self.DATA.CLBDist = ClbTime * Vclb
@@ -816,7 +816,7 @@ class Session:
         Dist = 926000 - self.DATA.CLBDist - self.DATA.DESDist #500nm to meters
         Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
         
-        self.DATA.ReqEnergy[2] = Dist*Drag / 3600
+        self.DATA.ReqEnergy[2] = Dist* (Drag / self.DATA.ThrustEfficiency) / 3600
         
         BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
         
@@ -824,7 +824,7 @@ class Session:
         Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
 
         if Ereq > BattE:
-            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag / 3600
             setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
             msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
             print(msg)
@@ -862,7 +862,7 @@ class Session:
                 break
 
         # Descent Energy Analysis
-        self.DATA.ReqEnergy[3] = self.DATA.DESDist*Drag / 3600
+        self.DATA.ReqEnergy[3] = self.DATA.DESDist*(Drag / self.DATA.ThrustEfficiency) / 3600
         
         BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
         
@@ -870,7 +870,7 @@ class Session:
         Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
 
         if Ereq > BattE:
-            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag / 3600
             setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
             msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
             print(msg)
