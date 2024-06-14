@@ -156,7 +156,10 @@ class PackageData:
     CLBAngle:float = 0 #in deg
     CLBAoA:float = 0 #in deg
     CLBDist:float = 0 #in m
-       
+    
+    DESRate:float = 5.588 #in m/s (1100fpm)
+    DESDist:float = 0 #in m
+
     Vref:float = 0 #in m/s
     LDR:float = 0 #in m
     
@@ -332,7 +335,7 @@ class Session:
         file.write("----------------------------------------------------\n")
 
         crzSpeed = 245/1.94384
-        crzDist = 926000-self.DATA.CLBDist
+        crzDist = 926000-self.DATA.CLBDist-self.DATA.DESDist
         crzTime = crzDist/crzSpeed
 
         BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
@@ -341,7 +344,7 @@ class Session:
         lines:list[str] = []
         lines = ["CRZ Speed : 245kts\n"]
         lines = lines + ["TO/CLB/CRZ Req Energy : "+str(round(self.DATA.ReqEnergy[0]))+"/"+str(round(self.DATA.ReqEnergy[1]))+"/"+str(round(self.DATA.ReqEnergy[2]))+" (Wh)\n"]
-        lines = lines + ["Total Batt Energy : "+str(BattE)+"Wh\n"]
+        lines = lines + ["Total Batt Energy : "+str(round(BattE))+"Wh\n"]
         lines = lines + ["CRZ Time : "+str(round(crzTime))+"sec\n"]
         lines = lines + ["CRZ Distance : "+str(crzDist/1852)+" nm\n"]
 
@@ -356,8 +359,43 @@ class Session:
         file.write("  iteration : "+str(self.iteration)+" / DES\n")
         file.write("----------------------------------------------------\n")
 
+        desDist = self.DATA.DESDist
+
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+
+        lines = ["DES Req Energy : "+str(round(self.DATA.ReqEnergy[3]))+" (Wh)\n"]
+        lines = lines + ["Total Batt Energy : "+str(round(BattE))+"Wh\n"]
+        lines = lines + ["DES Rate : -1100fpm\n"]
+        lines = lines + ["DES Distance : "+str(desDist/1852)+"Wh\n"]
         
-        #file.writelines(lines)
+        file.writelines(lines)
+        
+        file.close
+
+    def writeLDGData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / LDG\n")
+        file.write("----------------------------------------------------\n")
+
+        lines = [""]
+        
+        file.writelines(lines)
+        
+        file.close
+
+    def writeTaxiData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / Taxi\n")
+        file.write("----------------------------------------------------\n")
+
+        lines = ["Taxi Req Energy : "+str(round(self.DATA.ReqEnergy[4]))+" (Wh)\n"]
+        
+        file.writelines(lines)
         
         file.close
 
@@ -493,7 +531,8 @@ class Session:
                     self.resizeAC(15)
                     self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
                 elif i<=3 :
-                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+", Trim : "+str(round(self.ACFT.HStab.Ainc,2))+"\n"]+["Savde Trim Value = "+str(round(self.TrimArray[round(f/2)],2))+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
+                    self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
+                    msg = ["Trim Set\n"]+["Alpha : 0, Flaps : "+str(f)+", Trim : "+str(round(self.ACFT.HStab.Ainc,2))+"\n"]+["Saved Trim Value = "+str(round(self.TrimArray[round(f/2)],2))+"\n"]+["Cm = "+str(self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0])+"\n"]
                     print(msg)
                     self.writeLogMessage(msg)
                     for a in range(self.DATA.AoAmin,self.DATA.AoAMax+1,1):
@@ -711,7 +750,7 @@ class Session:
                             
                                 if Thrust > Drag:
                                     self.DATA.CLBAoA = a
-                                    self.DATA.CLBAngle = VVangle
+                                    self.DATA.CLBAngle = 180*VVangle/numpy.pi
                                     self.DATA.CLBRate = VVclb
         
         CD0 = self.CDArray[self.DATA.CLBAoA-self.DATA.AoAmin,0,self.DATA.ElevFD-elev]
@@ -767,21 +806,20 @@ class Session:
         Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
         Sref = Cref*self.ACFT.Wing.SpanHalf*2
 
-        
         CL = self.CLArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
         CD = self.CDArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
-        
-        Dist = 926000 - self.DATA.CLBDist #500nm to meters
-        
+
+        DESSpeed = 220/1.94384 
+        self.DATA.DESDist = DESSpeed
+
+        Dist = 926000 - self.DATA.CLBDist - self.DATA.DESDist #500nm to meters
         Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
-        
         
         self.DATA.ReqEnergy[2] = Dist*Drag / 3600
         
         BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
         
         BattE = self.DATA.BattDensity * BattMass
-
         Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
 
         if Ereq > BattE:
@@ -797,10 +835,48 @@ class Session:
     
     def DESAnalysis(self):
         self.Mach = 0.42
-        self.VmpsT = 190/1.94384
+        self.VmpsT = 220/1.94384
         self.rho = self.rhoSet[1]
 
-        self.writeCRZData()
+        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
+        Sref = Cref*self.ACFT.Wing.SpanHalf*2
+
+        a = 0
+
+        while 1:
+            
+            CL = self.CLArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+            CD = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+
+            Lift = 0.5*CL*(self.VmpsT**2)*self.rho*Sref
+            Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
+
+            DEStime = 30000/1100 * 60
+
+            if (Lift > self.ACFT.Mass) or (a > -2):
+                a -= 1
+            else:
+                DESdist = DEStime * self.VmpsT
+                self.DATA.DESDist = DESdist
+                break
+
+        # Descent Energy Analysis
+        self.DATA.ReqEnergy[3] = self.DATA.DESDist*Drag / 3600
+        
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        
+        BattE = self.DATA.BattDensity * BattMass
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+
+        if Ereq > BattE:
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
+            setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+            return 1
+
+        self.writeDESData()
         return 0
     
     def LDGAnalysis(self):
@@ -808,7 +884,7 @@ class Session:
         self.VmpsT = 190/1.94384
         self.rho = self.rhoSet[0]
 
-        #self.writeLDGData()
+        self.writeLDGData()
         return 0
 
     def TaxiAnalysis(self):
@@ -824,8 +900,9 @@ class Session:
         Tin = 240 #seconds
         
         Energy = Power*(Tout + Tin)
-        
 
-        #self.writeTaxiData()        
+        self.DATA.ReqEnergy[4] = Energy
+
+        self.writeTaxiData()
         return 0
         
