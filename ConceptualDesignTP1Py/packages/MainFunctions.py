@@ -889,20 +889,39 @@ class Session:
 
     def TaxiAnalysis(self):
         self.Mach = 0.212
+        self.VmpsT = 220/1.94384
         self.rho = self.rhoSet[0]
         
         Friction = self.ACFT.Mass*0.01*gAcc
         Vtaxi = 5.15 #m/s (10kts)
         
         Power = Friction * Vtaxi
+
+        CD = self.CDArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
+        Sref = Cref*self.ACFT.Wing.SpanHalf*2
+
+        Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
         
         Tout = 240 #seconds
         Tin = 240 #seconds
         
         Energy = Power*(Tout + Tin)
 
-        self.DATA.ReqEnergy[4] = Energy
+        self.DATA.ReqEnergy[4] = Energy / 3600
 
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+
+        if Ereq > BattE:
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
+            setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+            return 1
+        
         self.writeTaxiData()
         return 0
         
