@@ -15,10 +15,6 @@ import packages.MainFunctions as MainF
 RTTest = AVLF.runtime("TestRun/Test.avl","TestRun/Test.mass","T1/Test.run")
 TestAC = Acft.Aircraft(1,"Test")
 
-#MainF.runAVL(RTTest,"T1/Results.txt")
-
-#RTTest.reStartAVL()
-
 TestPackage = MainF.PackageData
 
 TestSession = MainF.Session(RTTest,TestAC,"TestRun")

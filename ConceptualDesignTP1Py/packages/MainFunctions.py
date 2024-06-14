@@ -367,7 +367,7 @@ class Session:
         lines = ["DES Req Energy : "+str(round(self.DATA.ReqEnergy[3]))+" (Wh)\n"]
         lines = lines + ["Total Batt Energy : "+str(round(BattE))+"Wh\n"]
         lines = lines + ["DES Rate : -1100fpm\n"]
-        lines = lines + ["DES Distance : "+str(desDist/1852)+"Wh\n"]
+        lines = lines + ["DES Distance : "+str(desDist/1852)+"nm\n"]
         
         file.writelines(lines)
         
@@ -810,7 +810,8 @@ class Session:
         CD = self.CDArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
 
         DESSpeed = 220/1.94384 
-        self.DATA.DESDist = DESSpeed
+        DEStime = 30000/1100 * 60
+        self.DATA.DESDist = DESSpeed * DEStime
 
         Dist = 926000 - self.DATA.CLBDist - self.DATA.DESDist #500nm to meters
         Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
