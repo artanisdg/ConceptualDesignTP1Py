@@ -3,9 +3,9 @@ ReqEnergyCLB = 200000
 ReqEnergyCRZ = 85000
 ReqEnergyDES = 14000
 ReqEnergyTAXI = 600
-BatteryDensity = 200
+BatteryDensity = 400
 
-MaxThrust = 100000
+MaxThrust = 50000
 MaxPower = 800000
 ThrustEfficiency = 0.86
 
