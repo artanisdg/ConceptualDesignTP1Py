@@ -5,12 +5,12 @@ ModelType=1
 
 Wing
 
-AttachPos=4,0,1.5
+AttachPos=4.5,0,1.5
 CoM=1,3,0
-RootChord=3
-TipChord=2
+RootChord=5
+TipChord=4
 SpanHalf=14
-Sweep=25
+Sweep=15
 Airfoil=2412
 Ainc=1
 Mass=1500
