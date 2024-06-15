@@ -678,7 +678,7 @@ class Session:
                 print(msg)
                 self.writeLogMessage(msg)
 
-                return 6
+                return 1
                     
             
         #TO Energy Analysis            
