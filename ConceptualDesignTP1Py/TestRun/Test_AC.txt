@@ -5,11 +5,11 @@ ModelType=1
 
 Wing
 
-AttachPos=3.5,0,1.5
+AttachPos=3,0,1.5
 CoM=1,3,0
-RootChord=5
+RootChord=6
 TipChord=4
-SpanHalf=14
+SpanHalf=15
 Sweep=15
 Airfoil=2412
 Ainc=1
@@ -31,9 +31,9 @@ HStab
 
 AttachPos=15,0,0
 CoM=1.2,2,0
-RootChord=2
-TipChord=1.8
-SpanHalf=4
+RootChord=3
+TipChord=2
+SpanHalf=6
 Sweep=20
 Airfoil=0
 Ainc=0
