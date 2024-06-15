@@ -1,6 +1,7 @@
 import os, sys
 import math
 import string
+from telnetlib import GA
 import time
 from tkinter import ROUND
 import numpy
@@ -645,7 +646,7 @@ class Session:
         CLv2 = self.CLArray[a-self.DATA.AoAmin,round(f/2),0]
         Lvsc = 0.5*CLv2*self.rho*Sref
             
-        self.DATA.VsTO=numpy.sqrt(self.ACFT.Mass/Lvsc)
+        self.DATA.VsTO=numpy.sqrt((self.ACFT.Mass*gAcc)/Lvsc)
         self.DATA.V2 = 1.2*self.DATA.VsTO
         
         Lv2 = 0.5*CLv2*(self.DATA.V2**2)*self.rho*Sref
@@ -667,13 +668,13 @@ class Session:
                     self.DATA.TODR = d
                     break
                 else:
-                    msg = ["TODR > TODA(762m)(marginal)\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]+["TODR = "+str(d)+"\n"]
+                    msg = ["TODR > TODA(762m)(marginal)\n"+"Alpha : "+0+", Flaps : "+str(f)+"\n"+"TODR = "+str(d)+"\n"]
                     print(msg)
                     self.writeLogMessage(msg)
 
                     return 1
             elif d>762:
-                msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"]+["Alpha : "+0+", Flaps : "+str(f)+"\n"]
+                msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"+"Alpha : 0, Flaps : "+str(f)+"\n"]
                 print(msg)
                 self.writeLogMessage(msg)
 
@@ -739,9 +740,9 @@ class Session:
                     elev = e
                     L = 0.5*CL*(Vclb**2)*self.rho*Sref
                 
-                    if L > self.ACFT.Mass:
-                        VVclb2 = Vclb*numpy.sin(numpy.arccos(self.ACFT.Mass/L))
-                        VVangle = numpy.arccos(self.ACFT.Mass/L)
+                    if L > (self.ACFT.Mass*gAcc):
+                        VVclb2 = Vclb*numpy.sin(numpy.arccos((self.ACFT.Mass*gAcc)/L))
+                        VVangle = numpy.arccos((self.ACFT.Mass*gAcc)/L)
 
                         if VVclb2 > VVclb:
                             VVclb = VVclb2
@@ -854,7 +855,7 @@ class Session:
 
             DEStime = 30000/1100 * 60
 
-            if (Lift > self.ACFT.Mass) or (a > -2):
+            if (Lift > (self.ACFT.Mass * gAcc)) or (a > -2):
                 a -= 1
             else:
                 DESdist = DEStime * self.VmpsT

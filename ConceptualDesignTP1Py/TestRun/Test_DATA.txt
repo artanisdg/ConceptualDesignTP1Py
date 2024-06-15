@@ -5,7 +5,7 @@ ReqEnergyDES = 14000
 ReqEnergyTAXI = 600
 BatteryDensity = 200
 
-MaxThrust = 4000
+MaxThrust = 15000
 MaxPower = 100000
 ThrustEfficiency = 0.86
 
