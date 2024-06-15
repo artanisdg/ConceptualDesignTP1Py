@@ -5,7 +5,7 @@ ModelType=1
 
 Wing
 
-AttachPos=4.5,0,1.5
+AttachPos=3.5,0,1.5
 CoM=1,3,0
 RootChord=5
 TipChord=4

@@ -765,7 +765,7 @@ class Session:
             return 6
                         
         elif VVclb < VVref:
-            msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"]
+            msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"+"Gravity : "+str(self.ACFT.Mass*gAcc)+",  Lift : "+str(L)+"\n"]
             print(msg)
             self.writeLogMessage(msg)
 
