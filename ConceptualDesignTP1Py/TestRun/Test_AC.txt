@@ -7,12 +7,12 @@ Wing
 
 AttachPos=3,0,1.5
 CoM=1,3,0
-RootChord=6
-TipChord=4
-SpanHalf=15
-Sweep=15
+RootChord=8
+TipChord=6
+SpanHalf=10
+Sweep=12
 Airfoil=2412
-Ainc=1
+Ainc=2
 Mass=1500
 
 Fuselage
@@ -31,10 +31,10 @@ HStab
 
 AttachPos=15,0,0
 CoM=1.2,2,0
-RootChord=3
-TipChord=2
+RootChord=4
+TipChord=3
 SpanHalf=6
-Sweep=20
+Sweep=10
 Airfoil=0
 Ainc=0
 Mass=180
