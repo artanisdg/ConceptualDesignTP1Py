@@ -62,6 +62,8 @@ def run_avl_worker(config_queue, result_queue):
             retval = runSession(alpha, flap, elevation, result_path)
             if retval:
                 result_queue.put(config)
+            else:
+                config_queue.put(config)
             watcher_process_runtime.reStartAVL()
     except KeyboardInterrupt:
         quitAVL()
