@@ -4,6 +4,7 @@ import os
 import queue
 import string
 import sys
+from telnetlib import GA
 import time
 from collections import defaultdict
 from subprocess import TimeoutExpired
@@ -23,19 +24,12 @@ import packages.AVLFunctions as AVLF
 from ConceptualDesignTP1Py import MAX_WORKERS
 
 
-def initSizing(avl: AVLF.runtime, ACFT: Acft.Aircraft, pth: string, res: int):
-    ACFT.ReadFromTxt(pth)
-    setBattery(ACFT, 200, 4000, 0.66)
-    ACFT.CalcCoM()
-    Acft.WriteACtoFile(ACFT, avl, res, 0.42)
-
-
-def setBattery(ACFT: Acft.Aircraft, DensityWhkg, kWhReq, WingBatteryRatio: float):
-    BattGW = kWhReq * 1000 / DensityWhkg
-    BattWing = BattGW * WingBatteryRatio
-    BattBody = BattGW * (1 - WingBatteryRatio)
-    ACFT.Battery.Mass.L = BattWing / 2
-    ACFT.Battery.Mass.R = BattWing / 2
+def setBattery(ACFT:Acft.Aircraft,DensityWhkg,WhReq,WingBatteryRatio:float):
+    BattGW = WhReq/DensityWhkg
+    BattWing = BattGW*WingBatteryRatio
+    BattBody = BattGW*(1-WingBatteryRatio)
+    ACFT.Battery.Mass.L = BattWing/2
+    ACFT.Battery.Mass.R = BattWing/2
     ACFT.Battery.Mass.F = BattBody
     ACFT.Wing.Mass = ACFT.Wing.Mass + ACFT.Battery.Mass.F * 0.025
 
@@ -51,54 +45,6 @@ def setBattery(ACFT: Acft.Aircraft, DensityWhkg, kWhReq, WingBatteryRatio: float
     ACFT.Battery.CoM.F[1] = ACFT.Fuselage.CoM[1]
     ACFT.Battery.CoM.F[2] = ACFT.Fuselage.CoM[2]
     print("Battery Calculation Complete")
-
-
-def resizeAC(ACFT: Acft.Aircraft, option: int):
-    if option == 1:  # CL too low
-        ACFT.Wing.SpanHalf = ACFT.Wing.SpanHalf * 1.05
-        ACFT.Wing.Mass = ACFT.Wing.Mass * 1.08
-    # elif option == 99: #CL excessive
-    #    0#tbd
-    elif option == 2:  # HStab too small
-        ACFT.HStab.SpanHalf = ACFT.HStab.SpanHalf * 1.05
-        ACFT.HStab.RootChord = ACFT.HStab.RootChord * 1.05
-        ACFT.HStab.TipChord = ACFT.HStab.TipChord * 1.05
-        ACFT.HStab.Mass = ACFT.HStab.Mass * (1.05**2)
-        ACFT.HStab.CoM[0] = ACFT.HStab.CoM[0] * 1.05
-    elif option == 3:  # VStab too small
-        ACFT.VStab.Span = ACFT.VStab.Span * 1.05
-        ACFT.VStab.RootChord = ACFT.VStab.Span * 1.05
-        ACFT.VStab.TipChord = ACFT.VStab.Span * 1.05
-        ACFT.VStab.Mass = ACFT.VStab.Mass * (1.05**2)
-        ACFT.VStab.CoM[0] = ACFT.VStab.CoM[0] * 1.05
-    elif option == 4:  # CG too fwd, Shift Battery CoM
-        ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] + 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] + 0.10 * 0.5 * (
-            ACFT.Wing.RootChord + ACFT.Wing.TipChord
-        )
-    elif option == 5:  # CG too aft, Shift Battery CoM
-        ACFT.Battery.CoM.F[0] = ACFT.Battery.CoM.F[0] - 0.5
-        ACFT.Fuselage.CoM[0] = ACFT.Fuselage.CoM[0] - 0.10 * 0.5 * (
-            ACFT.Wing.RootChord + ACFT.Wing.TipChord
-        )
-    elif option == 6:  # Thrust insufficient
-        0
-    elif option == 11:  # CL too low - increase chord
-        ACFT.Wing.RootChord = ACFT.Wing.RootChord * 1.05
-        ACFT.Wing.Mass = ACFT.Wing.Mass * 1.05 + ACFT.Wing.BattMass
-    elif option == 12:  # HStab ineffective -> Move Further Back
-        ACFT.HStab.AttachPos[0] = ACFT.HStab.AttachPos[0] + 0.3
-    elif option == 14:  # trim too down, trim up
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.25
-    elif option == 15:  # trim too up, trim down
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.25
-    elif option == 24:  # trim too down, trim up a lot
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc - 0.5
-    elif option == 25:  # trim too up, trim down a lot
-        ACFT.HStab.Ainc = ACFT.HStab.Ainc + 0.5
-    else:
-        print("resizeAC Function Call Error")
-    ACFT.CalcCoM()
 
 
 def setupAVL(RTime: AVLF.runtime):
@@ -186,6 +132,8 @@ class PackageData:
                 self.ReqEnergy[3] = float(line[1])
             if line[0] == "ReqEnergyTAXI":
                 self.ReqEnergy[4] = float(line[1])
+            if line[0] == "BatteryDensity":
+                self.BattDensity = float(line[1])
             if line[0] == "MaxThrust":
                 self.MaxThrust = float(line[1])
             if line[0] == "MaxPower":
@@ -202,10 +150,11 @@ class PackageData:
                 self.ElevFU = int(line[1])
                 self.ElevFD = int(line[2])
 
-    ReqEnergy: list[float] = numpy.empty(shape=(5), dtype=float)  # in Wh
-    MaxThrust: float = 0  # in N
-    MaxPower: float = 0  # in W
-    ThrustEfficiency: float = 0  # in floating point (Eprop * Emotor)
+    ReqEnergy:list[float] = numpy.empty(shape=(5),dtype=float) #in Wh
+    BattDensity:float = 200 #in Wh/kg
+    MaxThrust:float = 0 #in N
+    MaxPower:float = 0 #in W
+    ThrustEfficiency:float = 0 #in floating point (Eprop * Emotor)
 
     AoAmin: int
     AoAMax: int
@@ -218,14 +167,17 @@ class PackageData:
     VsTO: float = 0  # in m/s
     V2: float = 0  # in m/s
     TODR: float = 0  # in m
+    CLBRate:float = 0 #in m/s
+    CLBAngle:float = 0 #in deg
+    CLBAoA:float = 0 #in deg
+    CLBDist:float = 0 #in m
+    
+    DESRate:float = 5.588 #in m/s (1100fpm)
+    DESDist:float = 0 #in m
 
-    CLBRate: float = 0  # in m/s
-    CLBAngle: float = 0  # in deg
-    CLBAoA: float = 0  # in deg
-
-    Vref: float = 0  # in m/s
-    LDR: float = 0  # in m
-
+    Vref:float = 0 #in m/s
+    LDR:float = 0 #in m
+   
 
 class Session:
     AVLrt: AVLF.runtime
@@ -252,50 +204,36 @@ class Session:
         self.AVLrt = avl
         self.ACFT = Ac
         self.Folder = fldr
-        self.DATA = PackageData(self.Folder + "/" + Ac.Name + "_DATA.txt")
-        self.CLArray = numpy.empty(
-            shape=(
-                self.DATA.AoAMax - self.DATA.AoAmin + 1,
-                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
-                self.DATA.ElevFD - self.DATA.ElevFU + 1,
-            ),
-            dtype=float,
-        )
-        self.CDArray = numpy.empty(
-            shape=(
-                self.DATA.AoAMax - self.DATA.AoAmin + 1,
-                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
-                self.DATA.ElevFD - self.DATA.ElevFU + 1,
-            ),
-            dtype=float,
-        )
-        self.CMArray = numpy.empty(
-            shape=(
-                self.DATA.AoAMax - self.DATA.AoAmin + 1,
-                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
-                self.DATA.ElevFD - self.DATA.ElevFU + 1,
-            ),
-            dtype=float,
-        )
-        self.NPArray = numpy.empty(
-            shape=(
-                self.DATA.AoAMax - self.DATA.AoAmin + 1,
-                round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1),
-                self.DATA.ElevFD - self.DATA.ElevFU + 1,
-            ),
-            dtype=float,
-        )
-        self.TrimArray = numpy.empty(
-            shape=(round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1)), dtype=float
-        )
-        initSizing(avl, Ac, self.Folder + "/" + Ac.Name + "_AC.txt", 20)
-
-        for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
-            self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
-
+        self.DATA = PackageData(self.Folder+"/"+Ac.Name+"_DATA.txt")
+        self.CLArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CDArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.CMArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.NPArray = numpy.empty(shape=(self.DATA.AoAMax-self.DATA.AoAmin+1,round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1),self.DATA.ElevFD-self.DATA.ElevFU+1),dtype=float)
+        self.TrimArray = numpy.empty(shape=(round((self.DATA.FlapMax-self.DATA.Flapmin)/2+1)),dtype=float)
+        cur_dir = os.getcwd()
+        folder_path = os.path.join(cur_dir,fldr)
+        if os.path.exists(folder_path):
+            print("Session created, folder exists")
+        else:
+            try:
+                os.mkdir(folder_path)
+                print("Session created, folder made")
+            except:    
+                print("Session creation failed, folder not made")
+                time.sleep(10)
+                
+        self.initSizing(self.Folder+"/"+Ac.Name+"_AC.txt",20)
         self.iteration = 0
 
-    def ChangeFolder(self, fldr: str):
+    def initSizing(self,pth:string,res:int):
+        self.ACFT.ReadFromTxt(pth)
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+        Ebat = Ereq
+        setBattery(self.ACFT,200,Ebat,0.66)
+        self.ACFT.CalcCoM()
+        Acft.WriteACtoFile(self.ACFT,self.AVLrt,res,0.42)
+    
+    def ChangeFolder(self,fldr:str):
         self.Folder = fldr
         self.AVLrt.setAVLFileName(fldr + self.AVLrt.readAVLFileName())
         self.AVLrt.setMassFileName(fldr + self.AVLrt.readMassFileName())
@@ -393,108 +331,235 @@ class Session:
                         + str(Elev)
                     )
         return 0
-
-    def writeSTABMessage(self, message: list[str]):
-        file = open(self.Folder + "/Output/STABData-" + self.ACFT.Name, "a")
-
+        
+        
+    def writeLogMessage(self,message:list[str]):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : " + str(self.iteration) + " / STAB\n")
+        file.write("  iteration : "+str(self.iteration)+" / LOG Message\n")
         file.write("----------------------------------------------------\n")
 
         file.writelines(message)
-
         file.close()
 
     def writeTOData(self):
-        file = open(self.Folder + "/Output/TOData-" + self.ACFT.Name, "a")
-
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : " + str(self.iteration) + " / TO\n")
+        file.write("  iteration : "+str(self.iteration)+" / TO\n")
         file.write("----------------------------------------------------\n")
 
-        lines: list[str] = []
-        lines = ["TO Flap : " + str(self.DATA.TOFlap)]
-        lines = ["VsTO : " + str(self.DATA.VsTO) + "m/s\n"]
-        lines = lines + ["V2 : " + str(self.DATA.V2) + "m/s\n"]
-        lines = lines + ["TODR : " + str(self.DATA.TODR) + "m\n"]
-
+        lines:list[str] = []
+        lines = ["TO Flap : "+str(self.DATA.TOFlap)]
+        lines = ["VsTO : "+str(self.DATA.VsTO)+"m/s\n"]
+        lines = lines + ["V2 : "+str(self.DATA.V2)+"m/s\n"]
+        lines = lines + ["TODR : "+str(self.DATA.TODR)+"m\n"]
+        
         file.writelines(lines)
-
-        file.close()
-
-    def writeTOMessage(self, message: list[str]):
-        file = open(self.Folder + "/Output/TOData-" + self.ACFT.Name, "a")
-
-        file.write("----------------------------------------------------\n")
-        file.write("  iteration : " + str(self.iteration) + " / TO\n")
-        file.write("----------------------------------------------------\n")
-
-        file.writelines(message)
-
         file.close()
 
     def writeCLBData(self):
-        file = open(self.Folder + "/Output/CLBData-" + self.ACFT.Name, "a")
-
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
         file.write("----------------------------------------------------\n")
         file.write("  iteration : " + str(self.iteration) + " / CLB\n")
         file.write("----------------------------------------------------\n")
-
         lines: list[str] = []
         lines = ["CLB Rate : " + str(self.DATA.CLBRate) + "m/s\n"]
         lines = lines + ["CLB Angle : " + ""]
         lines = lines + ["CLB AoA : " + str(self.DATA.CLBAoA) + "\n"]
+        lines = lines + ["CLB Distance : "+str(self.DATA.CLBDist)+" m\n"]
+        
+        file.writelines(lines)
+        file.close()
+    
+    def writeCRZData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / CRZ\n")
+        file.write("----------------------------------------------------\n")
+
+        crzSpeed = 245/1.94384
+        crzDist = 926000-self.DATA.CLBDist-self.DATA.DESDist
+        crzTime = crzDist/crzSpeed
+
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+
+        lines:list[str] = []
+        lines = ["CRZ Speed : 245kts\n"]
+        lines = lines + ["TO/CLB/CRZ Req Energy : "+str(round(self.DATA.ReqEnergy[0]))+"/"+str(round(self.DATA.ReqEnergy[1]))+"/"+str(round(self.DATA.ReqEnergy[2]))+" (Wh)\n"]
+        lines = lines + ["Total Batt Energy : "+str(round(BattE))+"Wh\n"]
+        lines = lines + ["CRZ Time : "+str(round(crzTime))+"sec\n"]
+        lines = lines + ["CRZ Distance : "+str(crzDist/1852)+" nm\n"]
 
         file.writelines(lines)
+        file.close()
 
+    def writeDESData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / DES\n")
+        file.write("----------------------------------------------------\n")
+
+        desDist = self.DATA.DESDist
+
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+
+        lines = ["DES Req Energy : "+str(round(self.DATA.ReqEnergy[3]))+" (Wh)\n"]
+        lines = lines + ["Total Batt Energy : "+str(round(BattE))+"Wh\n"]
+        lines = lines + ["DES Rate : -1100fpm\n"]
+        lines = lines + ["DES Distance : "+str(desDist/1852)+"nm\n"]
+        file.writelines(lines)
+        file.close()
+
+    def writeLDGData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
+        file.write("----------------------------------------------------\n")
+        file.write("  iteration : "+str(self.iteration)+" / LDG\n")
+        file.write("----------------------------------------------------\n")
+
+        lines = [""]
+        
+        file.writelines(lines)
+        
         file.close
 
-    def writeCLBMessage(self, message: list[str]):
-        file = open(self.Folder + "/Output/CLBData-" + self.ACFT.Name, "a")
-
+    def writeTaxiData(self):
+        file = open(self.Folder+"/Output/Log-"+self.ACFT.Name,'a')
+        
         file.write("----------------------------------------------------\n")
-        file.write("  iteration : " + str(self.iteration) + " / CLB\n")
+        file.write("  iteration : "+str(self.iteration)+" / Taxi\n")
         file.write("----------------------------------------------------\n")
 
-        file.writelines(message)
+        lines = ["Taxi Req Energy : "+str(round(self.DATA.ReqEnergy[4]))+" (Wh)\n"]
+        
+        file.writelines(lines)
+        
+        file.close
 
-        file.close()
+    def resizeAC(self,option:int):
+        if   option == 1: #CL too low
+            msg = ["CL Too Low\n"+"Wing Span * 1.05\n"]
+            self.ACFT.Wing.SpanHalf = self.ACFT.Wing.SpanHalf * 1.05
+            self.ACFT.Wing.Mass = self.ACFT.Wing.Mass * 1.08
+            msg = msg + ["Span : "+str(self.ACFT.Wing.SpanHalf)+"  Mass : "+str(self.ACFT.Wing.Mass)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+
+        #elif option == 99: #CL excessive
+        #    0#tbd
+        elif option == 2: #HStab too small
+            msg = ["HStab too small\n"+"HStab Geom * 1.05\n"]
+            self.ACFT.HStab.SpanHalf = self.ACFT.HStab.SpanHalf * 1.05
+            self.ACFT.HStab.RootChord = self.ACFT.HStab.RootChord * 1.05
+            self.ACFT.HStab.TipChord = self.ACFT.HStab.TipChord * 1.05
+            self.ACFT.HStab.Mass = self.ACFT.HStab.Mass * (1.05**2)
+            self.ACFT.HStab.CoM[0] = self.ACFT.HStab.CoM[0] * 1.05
+            msg = msg + ["HStab Span : "+str(self.ACFT.HStab.SpanHalf)+"  Mass : "+str(self.ACFT.HStab.Mass)+"\n"]
+            msg = msg + ["HStab Root Chord : "+str(self.ACFT.HStab.RootChord)+"  Tip Chord : "+str(self.ACFT.HStab.TipChord)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+
+        elif option == 3: #VStab too small
+            self.ACFT.VStab.Span = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.RootChord = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.TipChord = self.ACFT.VStab.Span * 1.05
+            self.ACFT.VStab.Mass = self.ACFT.VStab.Mass * (1.05**2)
+            self.ACFT.VStab.CoM[0] = self.ACFT.VStab.CoM[0] * 1.05
+
+        elif option == 4: #CG too fwd, Shift Battery CoM
+            self.ACFT.Battery.CoM.F[0] = self.ACFT.Battery.CoM.F[0] + 0.5
+            self.ACFT.Fuselage.CoM[0] = self.ACFT.Fuselage.CoM[0] + 0.10*0.5*(self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)
+
+        elif option == 5: #CG too aft, Shift Battery CoM
+            self.ACFT.Battery.CoM.F[0] = self.ACFT.Battery.CoM.F[0] - 0.5
+            self.ACFT.Fuselage.CoM[0] = self.ACFT.Fuselage.CoM[0] - 0.10*0.5*(self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)
+
+        elif option == 6: #Thrust insufficient
+            0
+
+        elif option == 11: #CL too low - increase chord
+            self.ACFT.Wing.RootChord = self.ACFT.Wing.RootChord * 1.05
+            self.ACFT.Wing.Mass = self.ACFT.Wing.Mass * 1.05 + self.ACFT.Wing.BattMass
+
+        elif option == 12: #HStab ineffective -> Move Further Back
+            self.ACFT.HStab.AttachPos[0] = self.ACFT.HStab.AttachPos[0] + 0.3
+
+        elif option == 14: #trim too down, trim up
+            msg = ["Trim too down\n"+"HStab Trim -0.1deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.1
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 15: #trim too up, trim down
+            msg = ["Trim too up\n"+"HStab Trim +0.1deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.1
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 24: #trim too down, trim up a lot
+            msg = ["Trim too down\n"+"HStab Trim -0.5deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc - 0.5
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+        elif option == 25: #trim too up, trim down a lot
+            msg = ["Trim too up\n"+"HStab Trim +0.5deg\n"]
+            self.ACFT.HStab.Ainc = self.ACFT.HStab.Ainc + 0.5
+            msg = msg + ["HStab Trim : "+str(self.ACFT.HStab.Ainc)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+
+        else:
+            self.print("resizeAC Function Call Error")
+            self.writeLogMessage("resizeAC Function Call Error")
+            
+        self.ACFT.CalcCoM()
 
     def AeroAnalysis(self, config_queue, result_queue):
         self.CreateFiles(self.ACFT.Name)
+        AeroFolder = self.Folder + "/Output"
+
+        if os.path.exists(AeroFolder):
+            print("Output folder exists")
+        else:
+            try:
+                os.mkdir(AeroFolder)
+                print("Output folder made")
+            except:    
+                print("Output folder creation failed")
         is_f_read = defaultdict(bool)
 
         for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
             res: str = self.ACFT.Name + "-aero_stab_f" + str(f)
             self.CreateFiles(self.ACFT.Name)
+            if self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.1:
+                self.resizeAC(24)
+                self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
+            elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.1:
+                self.resizeAC(25)
+                self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
+            elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]<-0.01:
+                self.resizeAC(14)
+                self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
+            elif self.CMArray[0-self.DATA.AoAmin,round(f/2),self.DATA.ElevFD-0]>0.01:
+                self.resizeAC(15)
+                self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc
+            # self.TrimArray[round(f/2)] = self.ACFT.HStab.Ainc  # TODO needed?
             config_queue.put((0, f, 0, res))
-            if (
-                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
-                < -0.1
-            ):
-                resizeAC(self.ACFT, 24)
-                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
-            elif (
-                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
-                > 0.1
-            ):
-                resizeAC(self.ACFT, 25)
-                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
-            elif (
-                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
-                < -0.025
-            ):
-                resizeAC(self.ACFT, 14)
-                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
-            elif (
-                self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
-                > 0.025
-            ):
-                resizeAC(self.ACFT, 15)
-                self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
         terminate_count = 0
         get_timeout = 3
-        while terminate_count <= 5:
+        while terminate_count <= 3:
             try:
                 read_config = result_queue.get(timeout=get_timeout)
             except queue.Empty:
@@ -562,7 +627,7 @@ class Session:
                         ]
                     )
                     print(msg)
-                    self.writeSTABMessage(msg)
+                    self.writeLogMessage(msg)
 
                     return 5
 
@@ -588,8 +653,7 @@ class Session:
                         ]
                     )
                     print(msg)
-                    self.writeSTABMessage(msg)
-
+                    self.writeLogMessage(msg)
                     return 4
 
         for a in range(4, self.DATA.AoAMax + 1, 1):
@@ -616,11 +680,11 @@ class Session:
                         ]
                     )
                     print(msg)
-                    self.writeSTABMessage(msg)
+                    self.writeLogMessage(msg)
 
                     return 5
 
-        self.writeSTABMessage("CG in Range\n")
+        self.writeLogMessage("CG in Range\n")
         return 0
 
     def TOAnalysis(self):
@@ -637,7 +701,6 @@ class Session:
         a = 12
         CLv2 = self.CLArray[a - self.DATA.AoAmin, round(f / 2), 0]
         Lvsc = 0.5 * CLv2 * self.rho * Sref
-
         self.DATA.VsTO = numpy.sqrt(self.ACFT.Mass / Lvsc)
         self.DATA.V2 = 1.2 * self.DATA.VsTO
 
@@ -666,7 +729,7 @@ class Session:
                         + ["TODR = " + str(d) + "\n"]
                     )
                     print(msg)
-                    self.writeTOMessage(msg)
+                    self.writeLogMessage(msg)
 
                     return 1
             elif d > 762:
@@ -674,9 +737,8 @@ class Session:
                     "Alpha : 0, Flaps : " + str(f) + "\n"
                 ]
                 print(msg)
-                self.writeTOMessage(msg)
-
-                return 6
+                self.writeLogMessage(msg)
+                return 1
 
         # TO Energy Analysis
         self.DATA.ReqEnergy[0] = (
@@ -744,7 +806,6 @@ class Session:
                     if L > self.ACFT.Mass:
                         VVclb2 = Vclb * numpy.sin(numpy.arccos(self.ACFT.Mass / L))
                         VVangle = numpy.arccos(self.ACFT.Mass / L)
-
                         if VVclb2 > VVclb:
                             VVclb = VVclb2
                             if VVclb >= VVref:
@@ -752,7 +813,7 @@ class Session:
 
                                 if Thrust > Drag:
                                     self.DATA.CLBAoA = a
-                                    self.DATA.CLBAngle = VVangle
+                                    self.DATA.CLBAngle = 180*VVangle/numpy.pi
                                     self.DATA.CLBRate = VVclb
 
         CD0 = self.CDArray[
@@ -767,63 +828,168 @@ class Session:
                 + ["Max Thrust : " + str(Thrust) + ",  Drag : " + str(Drag) + "\n"]
             )
             print(msg)
-            self.writeCLBMessage(msg)
+            self.writeLogMessage(msg)
 
             return 6
 
         elif VVclb < VVref:
-            msg = (
-                ["Climbrate insufficient\n"]
-                + ["Alpha : " + str(self.DATA.CLBAoA) + "\n"]
-                + ["VV Req : " + str(VVref) + ",  VV Act : " + str(VVclb) + "\n"]
-            )
+            msg = ["Climbrate insufficient\n"]+["Alpha : "+str(self.DATA.CLBAoA)+"\n"]+["VV Req : "+str(VVref)+",  VV Act : "+str(VVclb)+"\n"+"Gravity : "+str(self.ACFT.Mass*gAcc)+",  Lift : "+str(L)+"\n"]
+            print(msg)
+            self.writeLogMessage(msg)
 
             return 1
+        
 
+        #CLB Energy Analysis
+        AltTgt = 9144 #meters, 30000ft
+        ClbTime = AltTgt/self.DATA.CLBRate
+        
+        Ep = self.ACFT.Mass * gAcc * AltTgt
+        Efric = Drag*Vclb*ClbTime / self.DATA.ThrustEfficiency
+        
+        self.DATA.ReqEnergy[1] = (Ep + Efric)/3600
+        self.DATA.CLBDist = ClbTime * Vclb
+        
+        #CLB Result Output
+        CLBFolder = self.Folder + "/Output"
+        self.DATA.CLBRate = VVclb
+
+
+        if os.path.exists(CLBFolder):
+            print("CLBDATA folder exists")
         else:
-            CLBFolder = self.Folder + "/Output"
-            self.DATA.CLBRate = VVclb
-
-            if os.path.exists(CLBFolder):
-                print("CLBDATA folder exists")
-            else:
-                try:
-                    os.mkdir(CLBFolder)
-                    print("CLBDATA folder made")
-                except:
-                    print("CLBDATA folder creation failed")
-            self.writeCLBData()
-            return 0
+            try:
+                os.mkdir(CLBFolder)
+                print("CLBDATA folder made")
+            except:    
+                print("CLBDATA folder creation failed")
+        self.writeCLBData()
+        return 0
 
     def CRZAnalysis(self):
         self.Mach = 0.42
         self.VmpsT = 245 / 1.94384
         self.rho = self.rhoSet[3]
+        
+        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
+        Sref = Cref*self.ACFT.Wing.SpanHalf*2
 
+        CL = self.CLArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+        CD = self.CDArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+
+        DESSpeed = 220/1.94384 
+        DEStime = 30000/1100 * 60
+        self.DATA.DESDist = DESSpeed * DEStime
+
+        Dist = 926000 - self.DATA.CLBDist - self.DATA.DESDist #500nm to meters
+        Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
+        
+        self.DATA.ReqEnergy[2] = Dist* (Drag / self.DATA.ThrustEfficiency) / 3600
+        
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        
+        BattE = self.DATA.BattDensity * BattMass
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+
+        if Ereq > BattE:
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag / 3600
+            setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+            return 1
+
+        self.writeCRZData()
         return 0
 
     def DESAnalysis(self):
         self.Mach = 0.42
-        self.VmpsT = 245 / 1.94384
+        self.VmpsT = 220/1.94384
         self.rho = self.rhoSet[1]
 
+        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
+        Sref = Cref*self.ACFT.Wing.SpanHalf*2
+
+        a = 0
+
+        while 1:
+            
+            CL = self.CLArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+            CD = self.CDArray[a-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+
+            Lift = 0.5*CL*(self.VmpsT**2)*self.rho*Sref
+            Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
+
+            DEStime = 30000/1100 * 60
+
+            if (Lift > (self.ACFT.Mass * gAcc)) or (a > -2):
+                a -= 1
+            else:
+                DESdist = DEStime * self.VmpsT
+                self.DATA.DESDist = DESdist
+                break
+
+        # Descent Energy Analysis
+        self.DATA.ReqEnergy[3] = self.DATA.DESDist*(Drag / self.DATA.ThrustEfficiency) / 3600
+        
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        
+        BattE = self.DATA.BattDensity * BattMass
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
+
+        if Ereq > BattE:
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag / 3600
+            setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+            return 1
+
+        self.writeDESData()
+        return 0
+    
+    def LDGAnalysis(self):
+        self.Mach = 0.212
+        self.VmpsT = 190/1.94384
+        self.rho = self.rhoSet[0]
+
+        self.writeLDGData()
         return 0
 
+    def TaxiAnalysis(self):
+        self.Mach = 0.212
+        self.VmpsT = 220/1.94384
+        self.rho = self.rhoSet[0]
+        
+        Friction = self.ACFT.Mass*0.01*gAcc
+        Vtaxi = 5.15 #m/s (10kts)
+        
+        Power = Friction * Vtaxi
 
-def LDGAnalysis(ACFT: Acft.Aircraft, AVLrt: AVLF.runtime, resPath: str):
-    LDGSession = Session(0.42, 135, 0)
+        CD = self.CDArray[0-self.DATA.AoAmin,0,self.DATA.ElevFD-0]
+        Cref = (self.ACFT.Wing.RootChord+self.ACFT.Wing.TipChord)/2
+        Sref = Cref*self.ACFT.Wing.SpanHalf*2
 
-    Friction = ACFT.Mass * 0.01 * gAcc
+        Drag = 0.5*CD*(self.VmpsT**2)*self.rho*Sref
+        
+        Tout = 240 #seconds
+        Tin = 240 #seconds
+        
+        Energy = Power*(Tout + Tin)
 
-    for i in range(0, 20):
-        0  # tbd
+        self.DATA.ReqEnergy[4] = Energy / 3600
 
-    AVLrt.reStartAVL()
-    operAVL(AVLrt, resPath)
+        BattMass = self.ACFT.Battery.Mass.L+self.ACFT.Battery.Mass.F+self.ACFT.Battery.Mass.R
+        BattE = self.DATA.BattDensity * BattMass
+        Ereq = self.DATA.ReqEnergy[0] + self.DATA.ReqEnergy[1] + self.DATA.ReqEnergy[2] + self.DATA.ReqEnergy[3] + self.DATA.ReqEnergy[4]
 
-
-def TaxiAnalysis(ACFT: Acft.Aircraft, AVLrt: AVLF.runtime, resPath: str):
-    Friction = ACFT.Mass * 0.01 * gAcc
-
-    AVLrt.reStartAVL()
-    operAVL(AVLrt, resPath)
+        if Ereq > BattE:
+            Eadd = Ereq + 45 * 60 * self.VmpsT * Drag
+            setBattery(self.ACFT,self.DATA.BattDensity,Eadd,0.8)
+            msg = ["Battery Energy Insufficient\n"+"Required Energy : "+str(round(Ereq))+"   Battery Energy : "+str(round(BattE))+"   (Battery Mass : "+str(round(BattMass))+")\n"]
+            print(msg)
+            self.writeLogMessage(msg)
+            return 1
+        
+        self.writeTaxiData()
+        return 0
