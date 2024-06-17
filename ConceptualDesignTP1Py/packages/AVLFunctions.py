@@ -24,13 +24,7 @@ class runtime:
         self.AVLFileName = AVLnm
         self.MassFileName = Massnm
         self.createRunFile()
-        self.AVLSession = self.StartAVL()
-
-    def StartAVL(self):
-        if "darwin" in sys.platform:
-            return subprocess.Popen(["../avl3.35"], stdin=subprocess.PIPE, text=True)
-        else:
-            return subprocess.Popen(["avl.exe"], stdin=subprocess.PIPE, text=True)
+        self.AVLSession = None
 
     def reStartAVL(self):
         self.AVLreturn()
@@ -76,17 +70,15 @@ class runtime:
         self.MassFileName = input
 
     def AVLcommand(self, cmd: str):
-        print(f"\n{cmd}\n")
         if self.AVLSession.poll() is not None:
-            print("process is closed")
             return
+        print(f"\n{cmd}\n")
         print(cmd, file=self.AVLSession.stdin, flush=True)
 
     def AVLreturn(self):
-        print()
         if self.AVLSession.poll() is not None:
-            print("process is closed")
             return
+        print()
         print(file=self.AVLSession.stdin, flush=True)
 
     # --------------End of Class : runtime----------------------

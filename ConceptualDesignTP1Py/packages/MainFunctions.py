@@ -1,8 +1,12 @@
 import math
+import multiprocessing
 import os
+import queue
 import string
 import sys
 import time
+from collections import defaultdict
+from subprocess import TimeoutExpired
 from tkinter import ROUND
 
 import numpy
@@ -15,6 +19,8 @@ if "darwin" in sys.platform:
 
 import packages.AVLAircraft as Acft
 import packages.AVLFunctions as AVLF
+
+from ConceptualDesignTP1Py import MAX_WORKERS
 
 
 def initSizing(avl: AVLF.runtime, ACFT: Acft.Aircraft, pth: string, res: int):
@@ -99,13 +105,17 @@ def setupAVL(RTime: AVLF.runtime):
     avlF = RTime.readAVLFileName()
     masF = RTime.readMassFileName()
     runF = RTime.readRunFileName()
-
     RTime.AVLcommand("LOAD " + avlF)
     RTime.AVLcommand("MASS " + masF)
     RTime.AVLcommand("MSET 0")
 
 
 def operAVL(RTime: AVLF.runtime, Alpha, Flap, Elevator, resPath: str, threshold=30):
+    if os.path.exists(resPath):
+        print("PATH EXISTS!", resPath)
+        RTime.AVLreturn()
+        RTime.AVLreturn()
+        return True
     RTime.AVLcommand("OPER")
     RTime.AVLcommand("O")
     RTime.AVLcommand("V")
@@ -117,13 +127,7 @@ def operAVL(RTime: AVLF.runtime, Alpha, Flap, Elevator, resPath: str, threshold=
     if Elevator != 0:
         RTime.AVLcommand("D3 D3 " + str(Elevator))
     RTime.AVLcommand("X")
-
     RTime.AVLcommand("st")
-    if os.path.exists(resPath):
-        # print("PATH EXISTS!", resPath)
-        RTime.AVLreturn()
-        RTime.AVLcommand("Quit")
-        return True
     RTime.AVLcommand(os.path.relpath(resPath, os.getcwd()))
     count = 0
     while not os.path.exists(resPath) and count < threshold:
@@ -247,7 +251,7 @@ class Session:
     def __init__(self, avl: AVLF.runtime, Ac: Acft.Aircraft, fldr: str):
         self.AVLrt = avl
         self.ACFT = Ac
-        self.Folder = os.path.join(os.getcwd(), fldr)
+        self.Folder = fldr
         self.DATA = PackageData(self.Folder + "/" + Ac.Name + "_DATA.txt")
         self.CLArray = numpy.empty(
             shape=(
@@ -284,18 +288,6 @@ class Session:
         self.TrimArray = numpy.empty(
             shape=(round((self.DATA.FlapMax - self.DATA.Flapmin) / 2 + 1)), dtype=float
         )
-        cur_dir = os.getcwd()
-        folder_path = os.path.join(cur_dir, fldr)
-        if os.path.exists(folder_path):
-            print("Session created, folder exists")
-        else:
-            try:
-                os.mkdir(folder_path)
-                print("Session created, folder made")
-            except:
-                print("Session creation failed, folder not made")
-                time.sleep(10)
-
         initSizing(avl, Ac, self.Folder + "/" + Ac.Name + "_AC.txt", 20)
 
         for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
@@ -304,7 +296,7 @@ class Session:
         self.iteration = 0
 
     def ChangeFolder(self, fldr: str):
-        self.Folder = os.path.join(os.getcwd(), fldr)
+        self.Folder = fldr
         self.AVLrt.setAVLFileName(fldr + self.AVLrt.readAVLFileName())
         self.AVLrt.setMassFileName(fldr + self.AVLrt.readMassFileName())
 
@@ -313,20 +305,19 @@ class Session:
         self.AVLrt.setMassFileName(self.Folder + "/" + name + ".mass")
         Acft.WriteACtoFile(self.ACFT, self.AVLrt, 20, self.Mach)
 
-    def runSession(self, Alpha, Flap, Elev, resP: str):
-        setupAVL(self.AVLrt)
-        retval = operAVL(self.AVLrt, Alpha, Flap, Elev, self.Folder + "/" + resP)
-        if retval:
-            self.readResult(Alpha, Flap, Elev, resP)
-        self.AVLrt.reStartAVL()
-
     def readResult(self, Alpha, Flap, Elev, resP: str):
         try:
             resFile = open(self.Folder + "/" + resP)
             resLines = resFile.readlines()
         except FileNotFoundError:
-            # print("file not found - a:"+str(Alpha)+" F:"+str(Flap)+" e:"+str(Elev))
-            time.sleep(2)
+            print(
+                "file not found - a:"
+                + str(Alpha)
+                + " F:"
+                + str(Flap)
+                + " e:"
+                + str(Elev)
+            )
             return 1
 
         for line in resLines:
@@ -469,15 +460,14 @@ class Session:
 
         file.close()
 
-    def AeroAnalysis(self):
-        Hung: list[str] = []
-
+    def AeroAnalysis(self, config_queue, result_queue):
         self.CreateFiles(self.ACFT.Name)
+        is_f_read = defaultdict(bool)
 
         for f in range(self.DATA.Flapmin, self.DATA.FlapMax + 1, 2):
             res: str = self.ACFT.Name + "-aero_stab_f" + str(f)
             self.CreateFiles(self.ACFT.Name)
-            self.runSession(0, f, 0, res)
+            config_queue.put((0, f, 0, res))
             if (
                 self.CMArray[0 - self.DATA.AoAmin, round(f / 2), self.DATA.ElevFD - 0]
                 < -0.1
@@ -502,21 +492,40 @@ class Session:
             ):
                 resizeAC(self.ACFT, 15)
                 self.TrimArray[round(f / 2)] = self.ACFT.HStab.Ainc
+        terminate_count = 0
+        get_timeout = 3
+        while terminate_count <= 5:
+            try:
+                read_config = result_queue.get(timeout=get_timeout)
+            except queue.Empty:
+                print(f"termination count: {terminate_count}, period: {get_timeout}")
+                terminate_count += 1
             else:
-                for a in range(self.DATA.AoAmin, self.DATA.AoAMax + 1, 1):
-                    for e in range(self.DATA.ElevFD, self.DATA.ElevFU - 1, -1):
-                        res: str = (
-                            self.ACFT.Name
-                            + "-aero_a"
-                            + str(a)
-                            + "_f"
-                            + str(f)
-                            + "_e"
-                            + str(e)
-                            + "_t"
-                            + str(self.TrimArray[round(f / 2)])
-                        )
-                        self.runSession(a, f, e, res)
+                terminate_count = 0
+                has_failed_to_read = self.readResult(*read_config)
+                if has_failed_to_read:
+                    result_queue.put(read_config)
+                else:
+                    (r_alpha, r_flap, r_elevate, r_respath) = read_config
+                    if r_alpha != 0 or r_elevate != 0:
+                        continue
+                    if is_f_read[r_flap]:
+                        continue
+                    for a in range(self.DATA.AoAmin, self.DATA.AoAMax + 1, 1):
+                        for e in range(self.DATA.ElevFD, self.DATA.ElevFU - 1, -1):
+                            res: str = (
+                                self.ACFT.Name
+                                + "-aero_a"
+                                + str(a)
+                                + "_f"
+                                + str(r_flap)
+                                + "_e"
+                                + str(e)
+                                + "_t"
+                                + str(self.TrimArray[round(r_flap / 2)])
+                            )
+                            config_queue.put((a, r_flap, e, res))
+                    is_f_read[r_flap] = True
 
     def CGAnalysis(self):
         STABFolder = self.Folder + "/Output"
@@ -653,7 +662,7 @@ class Session:
                 else:
                     msg = (
                         ["TODR > TODA(762m)(marginal)\n"]
-                        + ["Alpha : " + 0 + ", Flaps : " + str(f) + "\n"]
+                        + ["Alpha : 0, Flaps : " + str(f) + "\n"]
                         + ["TODR = " + str(d) + "\n"]
                     )
                     print(msg)
@@ -662,7 +671,7 @@ class Session:
                     return 1
             elif d > 762:
                 msg = ["TO Failed : TODR > TODA(762m)\nV2 unachievable\n"] + [
-                    "Alpha : " + 0 + ", Flaps : " + str(f) + "\n"
+                    "Alpha : 0, Flaps : " + str(f) + "\n"
                 ]
                 print(msg)
                 self.writeTOMessage(msg)
