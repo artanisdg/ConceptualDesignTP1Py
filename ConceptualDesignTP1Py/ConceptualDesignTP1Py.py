@@ -31,13 +31,9 @@ def run_avl_worker(config_queue, result_queue):
         return retval
 
     def quitAVL():
-        try:
-            watcher_process_runtime.AVLreturn()
-            watcher_process_runtime.AVLreturn()
-            watcher_process_runtime.AVLcommand("Quit")
-            # outs, errs = avl_process.communicate("Quit", timeout=15)
-        except TimeoutExpired:
-            avl_process.kill()
+        watcher_process_runtime.AVLreturn()
+        watcher_process_runtime.AVLreturn()
+        watcher_process_runtime.AVLcommand("Quit")
 
     def preexec_function():
         signal.signal(signal.SIGINT, signal.SIG_IGN)
